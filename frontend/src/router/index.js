@@ -1,6 +1,7 @@
 import { defineRouter } from '#q-app/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
+import { api } from 'src/boot/axios'
 
 /*
  * If not building with SSR mode, you can
@@ -25,6 +26,27 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE)
   })
+
+  Router.beforeEach(async(to) => {
+
+    if(to.path != "/loginpage") {
+      
+      try {
+        
+        // for dev env. turn this off
+        await api.get('/api/validations', {headers: {authorization: localStorage.getItem("accesstoken")}})
+        
+      } catch (err) {
+        
+        if ("AxiosError" == err.name){
+          Router.push('/loginpage')
+        }
+          
+      }
+
+    }
+  })
+
 
   return Router
 })
