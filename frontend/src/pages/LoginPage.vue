@@ -103,7 +103,7 @@ export default defineComponent({
 </script>
 
 
-<style>
+<style scoped>
 .content {
     min-width: 500px;
     max-width: 500px;
