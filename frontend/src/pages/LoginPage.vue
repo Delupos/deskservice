@@ -80,7 +80,7 @@
             </q-card-section>
             
             <q-card-section class="q-pt-none" v-if="dataCreateAccount.password !== passwordSub">
-                <a>Passwort muss bestätigt werden.</a>
+                <a style="color: red;">Passwort muss bestätigt werden.</a>
             </q-card-section>
 
             <q-card-section class="q-pt-none">

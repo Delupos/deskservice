@@ -1,5 +1,5 @@
 import { defineRouter } from '#q-app/wrappers'
-import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
+import { createRouter, createMemoryHistory, createWebHistory } from 'vue-router'
 import routes from './routes'
 import { api } from 'src/boot/axios'
 
@@ -15,7 +15,7 @@ import { api } from 'src/boot/axios'
 export default defineRouter(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory)
+    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHistory)
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
@@ -46,7 +46,6 @@ export default defineRouter(function (/* { store, ssrContext } */) {
 
     }
   })
-
 
   return Router
 })
