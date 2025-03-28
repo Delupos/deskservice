@@ -30,11 +30,69 @@
             <div class="content-rows">
                 <q-btn label="Passwort vergessen" no-caps
                     style="border-radius: 20px; background-color: #0068AE; color: white; font-size: medium; min-width: 50%;" />
-                <q-btn label="Account erstellen" no-caps
+                <q-btn label="Account erstellen" no-caps @click="displayCreateAccount()"
                     style="border-radius: 20px; background-color: #0068AE; color: white; font-size: medium; min-width: 50%;" />
             </div>
         </div>
     </q-page>
+
+    <q-dialog v-model="windowCreateAccount">
+        <q-card style="min-width: 400px; max-width: 400px;">
+            <q-card-section>
+                <div class="text-h6">
+                    Erstellen Sie ihren Account:
+                </div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*E-Mail" dense v-model="dataCreateAccount.email" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Name" dense v-model="dataCreateAccount.name" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Nachname" dense v-model="dataCreateAccount.surname" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input
+                    label="*Passwort"
+                    dense
+                    v-model="dataCreateAccount.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    autofocus
+                    @keyup.enter="prompt = false"
+                    >
+                    <template v-slot:append>
+                        <q-icon
+                        :name="showPassword ? 'visibility' : 'visibility_off'"
+                        class="cursor-pointer"
+                        @click="showPassword = !showPassword"
+                        />
+                    </template>
+                </q-input>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Passwort bestätigen" dense v-model="passwordSub" autofocus @keyup.enter="prompt = false" type="password"/>
+            </q-card-section>
+            
+            <q-card-section class="q-pt-none" v-if="dataCreateAccount.password !== passwordSub">
+                <a>Passwort muss bestätigt werden.</a>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Masterkey" dense v-model="dataCreateAccount.masterkey" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
+            <q-card-actions align="right" class="text-primary">
+                <q-btn flat label="Abbrechen" v-close-popup />
+                <q-btn flat label="Account erstellen" v-close-popup @click="createAccount()" :disabled="dataCreateAccount.password !== passwordSub || dataCreateAccount.password == ''" />
+            </q-card-actions>
+        </q-card>
+    </q-dialog>
 </template>
 
 
@@ -52,6 +110,16 @@ export default defineComponent({
             email: "",
             password: ""
         })
+        const dataCreateAccount = ref({
+            email: "",
+            name: "",
+            surname: "",
+            password: "",
+            masterkey: ""
+        })
+        const passwordSub = ref("")
+        const windowCreateAccount = ref(false)
+        const showPassword = ref(false)
 
         const $q = useQuasar()
         const router = useRouter()
@@ -94,9 +162,73 @@ export default defineComponent({
             }
         }
 
+        function displayCreateAccount() {
+            windowCreateAccount.value = true
+        }
+
+        function  isValidEmail(email) {
+            const emailRegex = /^[a-zA-Z0-9._%+-äöüÄÖÜ]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailRegex.test(email);
+        }
+
+        async function createAccount() {
+            if(Object.values(dataCreateAccount.value).some(value => value === "")){
+                $q.notify({
+                    message: "Bitte alle Felder ausfüllen.",
+                    type: "negative",
+                    timeout:2000
+                })
+                return;
+            }
+            if(!isValidEmail(dataCreateAccount.value.email)){
+                $q.notify({
+                    message: "Invalide E-Mail.",
+                    type: "negative",
+                    timeout:2000
+                })
+                return
+            }
+            try {
+                await api.post('/api/createUser', dataCreateAccount.value)
+                dataCreateAccount.value = {
+                    email: "",
+                    name: "",
+                    surname: "",
+                    password: "",
+                    masterkey: ""
+                }
+                $q.notify({
+                    message: "Ihr Account wurde erfolgreich angelegt.",
+                    type: "positive",
+                    timeout:2000
+                })
+            } catch(err) {
+                if(err.status == 401) {
+                    $q.notify({
+                        message: "Invaliden Masterkey.",
+                        type: "negative",
+                        timeout:2000
+                    })
+                } else {
+                    console.log(err)
+                    $q.notify({
+                        message: "Fehler beim erstellen.",
+                        type: "negative",
+                        timeout:2000
+                    })
+                }
+            }
+        }
+
         return {
             dataLogin,
-            Login
+            dataCreateAccount,
+            windowCreateAccount,
+            passwordSub,
+            showPassword,
+            Login,
+            displayCreateAccount,
+            createAccount
         }
     }
 });

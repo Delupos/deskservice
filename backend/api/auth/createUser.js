@@ -14,6 +14,15 @@ const bcrypt = require('bcrypt');
 router.post('/', async(req, res) => {
   try {
     
+    // Muss noch ausgelagert werden
+    if (req.body.masterkey != "FOM-2022") {
+      res.status(401).json({
+        success: false,
+        error: "Invaliden Masterkey"
+      })  
+      return;     
+    }
+
     const temp = {
         email: req.body.email,
         name: req.body.name,
