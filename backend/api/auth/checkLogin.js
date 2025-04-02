@@ -59,7 +59,8 @@ router.post('/', async(req, res) => {
                         name: userProfil.dataValues.name,
                         surname: userProfil.dataValues.surname,
                         email: userProfil.dataValues.email,
-                        id: userProfil.dataValues.id
+                        id: userProfil.dataValues.id,
+                        isAdmin: userProfil.dataValues.admin
                         }, jwt_secret, 
                         {expiresIn: '3h'})
 

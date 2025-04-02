@@ -11,7 +11,7 @@
           
           <q-list>
    
-            <q-item clickable v-close-popup >
+            <q-item v-if="accessToAllUser" :clickable="accessToAllUser" v-close-popup @click="test()" id="itemToAllUser">
               <q-item-section>
                 <q-item-label>Alle Nutzer anzeigen</q-item-label>
               </q-item-section>
@@ -49,14 +49,25 @@ export default defineComponent({
     const version = ref("1.0")
     const verOrBtn = ref(false)
     const router = useRouter()
+    const token = ref("")
+    const accessToAllUser = ref(false)
 
     onMounted(() => {
       versionOrButton(router.currentRoute.value.fullPath)
+      grantAccessToAllUser()
     })
 
     watch(() => router.currentRoute.value.fullPath, (newPath) => {  
       versionOrButton(newPath)
+      grantAccessToAllUser()
     })
+
+    function grantAccessToAllUser(){
+      if(router.currentRoute.value.fullPath != '/loginpage') {
+        token.value = JSON.parse(atob(localStorage.getItem("accesstoken").split(".")[1]))
+        accessToAllUser.value = token.value.isAdmin
+      }     
+    }
 
     const versionOrButton = (path) => {
       if (path != "/loginpage"){
@@ -64,6 +75,10 @@ export default defineComponent({
       } else {
         verOrBtn.value = false
       }
+    }
+
+    function test() {
+      console.log("Klappt")
     }
 
     function logout() {
@@ -75,7 +90,9 @@ export default defineComponent({
       title,
       version,
       verOrBtn,
-      logout
+      accessToAllUser,
+      logout,
+      test
     }
 
   }

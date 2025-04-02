@@ -5,7 +5,7 @@
       <img src="/logo.png" style="width: 260px;">
       <div class="q-pa-md">
         <div class="q-gutter-md row items-start">
-          <q-date v-model="date" minimal style="background-color: #0068ae; color: antiquewhite;" />
+          <q-date v-model="date" minimal style="background-color: #D9DBF1; color: black;" />
         </div>
       </div>
       <h6 style="margin: 0px; margin-top: 20px;">Ihr ausgewähltes Datum:</h6>
@@ -18,15 +18,16 @@
           <br>
           Raumübersicht
         </p>
+      </div>
+      <div class="deskview"> 
 
       </div>
-      <div class="deskview"> </div>
 
 
       <div style="display: flex; flex-direction: row; min-width: 100%; justify-content: center; margin-top: 4px;">
         <div class="q-pa-md">
           <div class="q-gutter-sm row">
-            <q-input filled v-model="starttime" mask="time" :rules="['starttime']" label="Startzeit">
+            <q-input filled v-model="starttime" mask="time" :rules="['starttime']" label="Startzeit" style="max-width: 160px;">
               <template v-slot:append>
                 <q-icon name="access_time" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -46,7 +47,7 @@
 
         <div class="q-pa-md">
           <div class="q-gutter-sm row">
-            <q-input filled v-model="endtime" mask="time" :rules="['endtime']" label="Endzeit">
+            <q-input filled v-model="endtime" mask="time" :rules="['endtime']" label="Endzeit" style="max-width: 160px;">
               <template v-slot:append>
                 <q-icon name="access_time" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -61,10 +62,17 @@
             </q-input>
           </div>
         </div>
+
+        <div class="q-pa-md">
+          <div class="q-gutter-sm row">
+            <q-select label="Andere Optionen" no-caps style="min-width: 160px; max-width: 160px;" :options="otherTimeOptions" v-model="selectedTime"></q-select>
+          </div>
+        </div>
+
       </div>
 
       <div style="display: flex; min-width: 100%; justify-content: center;">
-        <button class="bookbutton" id="3" name="book">Buchen</button>
+        <q-btn label="Buchen" id="3" name="book" class="bookbutton" style="background-color: #D9DBF1; color: black;" @click="bookTable()"></q-btn>
       </div>
 
     </div>
@@ -85,7 +93,7 @@
       </div>
 
       <div
-        style="display:flex; min-width: 90%; min-height: fit-content; background-color: white; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center;">
+        style="display:flex; min-width: 90%; min-height: fit-content; background-color: white; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center; background-color: #D9DBF1;">
         <h6 style="margin: 20px 0 0 0;">Alle Buchungen</h6>
 
         <div class="bookingCard" v-for="i in testData" v-bind:key="i">
@@ -93,8 +101,10 @@
             <img src="/date_range.png" style="width: 32px;">
             <a style="margin-left: 12px; font-size: medium;">Sitzplatz: xxx {{ i }}</a>
           </div>
-          <a>01.01.2024 00:00 - 31.12.2025 23:59</a>
-          <hr style="border-color: black; min-width: 100%;">
+          <a>01.01.2024 00:00-23:59</a>
+          <div style="display: flex; justify-content: left; min-width: 100%">
+            <hr style="border-color: black; min-width: 80%;">
+          </div>
         </div>
       </div>
     </div>
@@ -102,30 +112,60 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, watchEffect } from 'vue';
 
 export default defineComponent({
   name: 'IndexPage',
 
   setup() {
-    const date = ref('2025/03/24')
+    const date = ref('')
+    const today = new Date()
     const name = ref("")
     const token = JSON.parse(atob(localStorage.getItem("accesstoken").split(".")[1]))
-    const starttime = ref('07:00')
-    const endtime = ref('15:00')
+    const starttime = ref('08:00')
+    const endtime = ref('16:00')
+    const otherTimeOptions = ref([
+      "Vormittags",
+      "Nachmittags",
+      "Den ganzen Tag",
+    ])
+    const selectedTime = ref("")
     const testData = ref([1, 2, 3])
 
 
     onMounted(async () => {
       name.value = token.name
+      date.value = today.getFullYear() + '/' + 
+                      String(today.getMonth() + 1).padStart(2, '0') + '/' + 
+                      String(today.getDate()).padStart(2, '0');
     })
+
+    watchEffect(() => {
+      if(selectedTime.value == "Vormittags"){
+        starttime.value = "06:00"
+        endtime.value = "12:00"
+      } else if (selectedTime.value == "Nachmittags"){
+        starttime.value = "12:00"
+        endtime.value = "18:00"       
+      } else if (selectedTime.value == "Den ganzen Tag"){
+        starttime.value = "06:00"
+        endtime.value = "18:00"       
+      }
+    })
+
+    function bookTable() {
+      console.log("Tisch buchen am "+date.value+" von "+starttime.value+"-"+endtime.value+" Uhr")
+    }
 
     return {
       date,
       name,
       testData,
       starttime,
-      endtime
+      endtime,
+      otherTimeOptions,
+      selectedTime,
+      bookTable
     }
   }
 });
@@ -145,7 +185,7 @@ export default defineComponent({
   min-width: 25%;
   max-width: 25%;
   min-height: 100%;
-  background-color: #A4D3F2;
+  background-color: #E7ECF3;
   border-radius: 40px;
   display: flex;
   flex-direction: column;
@@ -167,14 +207,10 @@ export default defineComponent({
 }
 
 .bookbutton {
-  background-color: #8b6ff0;
-  color: white;
   border: none;
   border-radius: 999px;
   padding: 15px 44px;
   font-size: 17px;
-  align-items: center;
-  justify-content: center;
   margin-top: -12px;
 }
 
@@ -182,19 +218,21 @@ export default defineComponent({
   min-width: 50%;
   max-width: 50%;
   min-height: 100%;
-  background-color: #A4D3F2;
+  background-color: #E7ECF3;
   border-radius: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .deskview {
   background-color: white;
   min-height: 60%;
-  min-width: 60%;
+  min-width: 80%;
   max-height: 60%;
-  max-width: 60%;
+  max-width: 80%;
   display: flex;
-  margin-left: 182px;
-  margin-top: 30px;
 }
 
 .overline {
@@ -202,27 +240,26 @@ export default defineComponent({
   max-width: 100%;
   min-height: 14%;
   max-height: 14%;
-  background-color: #1f2a48;
+  background-color: #E7ECF3;
   border-top-left-radius: 40px;
   border-top-right-radius: 40px;
 }
 
 .overlinetext {
-  color: antiquewhite;
+  color: black;
   font-size: 28px;
+  font-weight: 700;
   display: flex;
   justify-content: center;
   align-items: center;
   vertical-align: text-bottom;
-
-
 }
 
 .bookings {
   min-width: 25%;
   max-width: 25%;
   min-height: 100%;
-  background-color: #A4D3F2;
+  background-color: #E7ECF3;
   border-radius: 40px;
   display: flex;
   /* justify-content: space-between; */
@@ -237,6 +274,7 @@ export default defineComponent({
   max-height: fit-content;
   display: flex;
   flex-direction: column;
+  justify-content: left;
   margin: 10px;
 }
 
