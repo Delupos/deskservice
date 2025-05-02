@@ -5,11 +5,11 @@
       <img src="/logo.png" style="width: 260px;">
       <div class="q-pa-md">
         <div class="q-gutter-md row items-start">
-          <q-date v-model="date" minimal style="background-color: #D9DBF1; color: black;" />
+          <q-date v-model="attributesToBookTable.date" minimal style="background-color: #D9DBF1; color: black;" />
         </div>
       </div>
       <h6 style="margin: 0px; margin-top: 20px;">Ihr ausgewähltes Datum:</h6>
-      <h5 style="margin: 0px;">{{ date }}</h5>
+      <h5 style="margin: 0px;">{{ attributesToBookTable.date }}</h5>
     </div>
 
     <div class="table">
@@ -31,26 +31,35 @@
           </q-item>
         </q-list>
 
-        <q-list class="q-pa-md" v-for="data in bookingData" v-bind:key="data">
-          <q-item>
-            <q-item-section>{{ data["seatId"] }}</q-item-section>
-            <q-item-section>{{ data["place"] }}</q-item-section>
-            <q-item-section>Status</q-item-section>
-            <q-item-section><q-checkbox v-model="test"/></q-item-section>
-          </q-item>
-        </q-list>       
+        <q-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle"
+        style="max-height: 84%; min-height: 84%; width: 100%; overflow-y: auto; display: flex; flex-wrap: wrap;">
 
+          <q-list class="q-pa-md" v-for="data in bookingData" v-bind:key="data">
+            <q-item>
+              <q-item-section>{{ data["seatId"] }}</q-item-section>
+              <q-item-section>{{ data["place"] }}</q-item-section>
+              <q-item-section>Status</q-item-section>
+              <q-item-section>
+                <q-checkbox v-model="test"
+                  :model-value="attributesToBookTable.selectedTableId === data.id"
+                  @update:model-value="val => attributesToBookTable.selectedTableId = val ? data.id : null"
+                />
+              </q-item-section>
+            </q-item>
+          </q-list>     
+
+        </q-scroll-area>
       </div>
 
 
       <div style="display: flex; flex-direction: row; min-width: 100%; justify-content: center; margin-top: 4px;">
         <div class="q-pa-md">
           <div class="q-gutter-sm row">
-            <q-input filled v-model="starttime" mask="time" :rules="['starttime']" label="Startzeit" style="max-width: 160px;">
+            <q-input filled v-model="attributesToBookTable.startTime" mask="time" :rules="['startTime']" label="Startzeit" style="max-width: 160px;">
               <template v-slot:append>
                 <q-icon name="access_time" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-time v-model="starttime">
+                    <q-time v-model="attributesToBookTable.startTime">
                       <div class="row items-center justify-end">
                         <q-btn v-close-popup label="Close" color="primary" flat />
 
@@ -66,11 +75,11 @@
 
         <div class="q-pa-md">
           <div class="q-gutter-sm row">
-            <q-input filled v-model="endtime" mask="time" :rules="['endtime']" label="Endzeit" style="max-width: 160px;">
+            <q-input filled v-model="attributesToBookTable.endTime" mask="time" :rules="['endTime']" label="Endzeit" style="max-width: 160px;">
               <template v-slot:append>
                 <q-icon name="access_time" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-time v-model="endtime">
+                    <q-time v-model="attributesToBookTable.endtime">
                       <div class="row items-center justify-end">
                         <q-btn v-close-popup label="Close" color="primary" flat />
                       </div>
@@ -108,7 +117,7 @@
       <div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
         <h6 style="margin: 40px 0 0 0;">Hallo {{ name }}</h6>
         <h6 style="margin: 0px;">Ihre heutige Buchung:</h6>
-        <h6 style="margin: 0px;">None</h6>
+        <h6 style="margin: 0px;"></h6>
       </div>
 
       <div
@@ -136,17 +145,16 @@
 <script>
 import { defineComponent, ref, onMounted, watchEffect } from 'vue';
 import { api } from 'src/boot/axios';
+import { useQuasar } from 'quasar';
 
 export default defineComponent({
   name: 'IndexPage',
 
   setup() {
-    const date = ref('')
+    const $q = useQuasar()
     const today = new Date()
     const name = ref("")
     const token = JSON.parse(atob(localStorage.getItem("accesstoken").split(".")[1]))
-    const starttime = ref('08:00')
-    const endtime = ref('16:00')
     const otherTimeOptions = ref([
       "Vormittags",
       "Nachmittags",
@@ -157,33 +165,61 @@ export default defineComponent({
     const bookingData = ref({})
     const myBookings = ref({})
     const test = ref(false)
-
+    const attributesToBookTable = ref({
+      selectedTableId: false,
+      startTime: '08:00',
+      endTime: '16:00',
+      date: ""
+    })
+    const todaysBooking = ref("None")
 
     onMounted(async () => {
       name.value = token.name
-      date.value = today.getFullYear() + '/' + 
+      attributesToBookTable.value.id = token.id
+      attributesToBookTable.value.date = today.getFullYear() + '/' + 
                       String(today.getMonth() + 1).padStart(2, '0') + '/' + 
                       String(today.getDate()).padStart(2, '0');
       bookingData.value = (await api.get('/api/getAllTables')).data.data
       myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
+      for (var i in myBookings.value) {
+        const bookingDate = myBookings.value[i].startTime.slice(0, 10)
+        const today = new Date().toISOString().slice(0, 10)
+        if (bookingDate === today) {
+          todaysBooking.value = myBookings.value[i]
+        }
+      }
       myBookings.value = formatBookingTimes(myBookings.value)
     })
 
     watchEffect(() => {
       if(selectedTime.value == "Vormittags"){
-        starttime.value = "06:00"
-        endtime.value = "12:00"
+        attributesToBookTable.value.startTime = "06:00"
+        attributesToBookTable.value.endTime = "12:00"
       } else if (selectedTime.value == "Nachmittags"){
-        starttime.value = "12:00"
-        endtime.value = "18:00"       
+        attributesToBookTable.value.startTime = "12:00"
+        attributesToBookTable.value.endTime = "18:00"       
       } else if (selectedTime.value == "Den ganzen Tag"){
-        starttime.value = "06:00"
-        endtime.value = "18:00"       
+        attributesToBookTable.value.startTime = "06:00"
+        attributesToBookTable.value.endTime = "18:00"       
       }
     })
 
-    function bookTable() {
-      console.log("Tisch buchen am "+date.value+" von "+starttime.value+"-"+endtime.value+" Uhr")
+    async function bookTable() {
+      const dataForBooking = {
+        userId: attributesToBookTable.value.id,
+        tableId: attributesToBookTable.value.selectedTableId,
+        start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
+        end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
+      }
+      console.log(dataForBooking)
+      await api.post('/api/createBooking', dataForBooking)
+      $q.notify({
+          message: "Erfolgreich gebucht.",
+          type: "positive",
+          timeout:2000
+      })
+      myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
+      myBookings.value = formatBookingTimes(myBookings.value)
     }
 
     function formatBookingTimes(bookings) {
@@ -211,17 +247,28 @@ export default defineComponent({
 
 
     return {
-      date,
       name,
       testData,
-      starttime,
-      endtime,
       otherTimeOptions,
       selectedTime,
       bookingData,
       myBookings,
       test,
-      bookTable
+      attributesToBookTable,
+      todaysBooking,
+      bookTable,
+      thumbStyle: {
+          right: '4px',
+          borderRadius: '5px',
+          width: '5px',
+          opacity: 0.75
+      },
+      barStyle: {
+          right: '2px',
+          borderRadius: '9px',
+          width: '9px',
+          opacity: 0.2
+      }
     }
   }
 });

@@ -17,6 +17,12 @@
               </q-item-section>
             </q-item>
 
+            <q-item v-if="accessToAllUser" :clickable="accessToAllUser" v-close-popup @click="showTableDialog()" id="itemToAllUser">
+              <q-item-section>
+                <q-item-label>Neuen Tisch anlegen</q-item-label>
+              </q-item-section>
+            </q-item>
+
             <q-item clickable v-close-popup @click="logout()">
               <q-item-section>
                 <q-item-label>Logout</q-item-label>
@@ -46,6 +52,28 @@
         />
       </q-card>
   </q-dialog>
+
+  <q-dialog v-model="displayCreateTable" transition-show="scale" transition-hide="scale">
+    <q-card style="min-width: 500px; min-height: fit-content; max-height: 600px ; padding: 16px;">
+      <q-card-section style="min-height: 100px; max-height: 100px; margin-top: -30px; margin-bottom: 20px;">          
+        <h6>Lege einen neuen Tisch an:</h6>  
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+          <q-input filled dense v-model="createNewTable.seatId" autofocus label='Tischnummer:'></q-input>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+          <q-input filled dense v-model="createNewTable.place" autofocus label='Straße von Standort:'></q-input>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+          <q-input filled dense v-model="createNewTable.street" autofocus label='Straße (Optional):'></q-input>
+      </q-card-section>
+      <q-card-actions style="display: flex; justify-content: space-between;">
+          <q-btn flat label='Schließen' v-close-popup no-caps></q-btn>
+          <q-btn flat label='Erstellen' v-close-popup no-caps @click="createTable()"></q-btn>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
   </q-layout>
 </template>
 
@@ -53,11 +81,13 @@
 import { defineComponent, ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import { api } from 'src/boot/axios';
+import { useQuasar } from 'quasar';
 
 export default defineComponent({
   name: 'MainLayout',
 
   setup() {
+    const $q = useQuasar()
     const title = ref("Desk-Service")
     const version = ref("1.0")
     const verOrBtn = ref(false)
@@ -65,6 +95,12 @@ export default defineComponent({
     const token = ref("")
     const accessToAllUser = ref(false)
     const displayAllUser = ref(false)
+    const displayCreateTable = ref(false)
+    const createNewTable = ref({
+      seatId: "",
+      place: "",
+      street: ""
+    })
     const columns = [
       {
         name: 'email',
@@ -110,6 +146,32 @@ export default defineComponent({
       displayAllUser.value = true
     }
 
+    async function showTableDialog() {
+      displayCreateTable.value = true
+    }
+
+    async function createTable() {
+      try {
+        api.post('/api/createTable', createNewTable.value)
+        createNewTable.value = {
+          seatId: "",
+          place: "",
+          street: ""
+        }
+        $q.notify({
+            message: "Erfolgreich erstellt.",
+            type: "positive",
+            timeout:2000
+        })
+      } catch {
+        $q.notify({
+            message: "Fehler beim Erstellen.",
+            type: "negative",
+            timeout:2000
+        })
+      }
+    }
+
     async function loadAllUserData() {
       try {
         const result = (await api.get('/api/getAllUser')).data.data
@@ -122,7 +184,6 @@ export default defineComponent({
             }
           )
         }
-        // console.log(userData.value)
       } catch(err) {
         console.log(err)
       }
@@ -141,8 +202,12 @@ export default defineComponent({
       displayAllUser,
       columns,
       userData,
+      displayCreateTable,
+      createNewTable,
       logout,
       showUserDialog,
+      showTableDialog,
+      createTable,
     }
 
   }

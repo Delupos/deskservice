@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
                 }
             ],
             order: [
-                ["startTime", "DESC"]
+                ["startTime", "ASC"]
             ]
         })
 
