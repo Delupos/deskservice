@@ -122,7 +122,7 @@ export default defineComponent({
             }
           )
         }
-        console.log(userData.value)
+        // console.log(userData.value)
       } catch(err) {
         console.log(err)
       }

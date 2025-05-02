@@ -8,6 +8,14 @@ const index = require('../api/index')
 
 // DB imports
 const user = require('../models/user')
+const table = require('../models/table')
+const bookings = require('../models/bookings')
+
+// Relations
+user.hasMany(bookings, { foreignKey: 'userId' });
+bookings.belongsTo(user, { foreignKey: 'userId' });
+table.hasMany(bookings, { foreignKey: 'tableId' });
+bookings.belongsTo(table, { foreignKey: 'tableId' });
 
 app.listen(port, () => { 
     console.log(`Example app listening on port ${port}`) })

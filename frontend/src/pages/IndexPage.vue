@@ -19,7 +19,26 @@
           Raumübersicht
         </p>
       </div>
+
       <div class="deskview"> 
+
+        <q-list class="q-pa-md">
+          <q-item>
+            <q-item-section>Tisch</q-item-section>
+            <q-item-section>Ort</q-item-section>
+            <q-item-section>Status</q-item-section>
+            <q-item-section>Buchen</q-item-section>
+          </q-item>
+        </q-list>
+
+        <q-list class="q-pa-md" v-for="data in bookingData" v-bind:key="data">
+          <q-item>
+            <q-item-section>{{ data["seatId"] }}</q-item-section>
+            <q-item-section>{{ data["place"] }}</q-item-section>
+            <q-item-section>Status</q-item-section>
+            <q-item-section><q-checkbox v-model="test"/></q-item-section>
+          </q-item>
+        </q-list>       
 
       </div>
 
@@ -96,12 +115,15 @@
         style="display:flex; min-width: 90%; min-height: fit-content; background-color: white; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center; background-color: #D9DBF1;">
         <h6 style="margin: 20px 0 0 0;">Alle Buchungen</h6>
 
-        <div class="bookingCard" v-for="i in testData" v-bind:key="i">
+        <div class="bookingCard" v-for="i in myBookings" v-bind:key="i">
           <div class="bookingCardTitle">
-            <img src="/date_range.png" style="width: 32px;">
-            <a style="margin-left: 12px; font-size: medium;">Sitzplatz: xxx {{ i }}</a>
+            <div style="display: flex; align-items: center;">
+              <img src="/date_range.png" style="width: 32px;">
+              <a style="margin-left: 12px; font-size: medium;">Sitzplatz: {{ i.table.seatId }}</a>
+            </div>
+            <a>{{ i.table.place }}</a>
           </div>
-          <a>01.01.2024 00:00-23:59</a>
+          <a>{{ i.startTime }} - {{ i.endTime }}</a>
           <div style="display: flex; justify-content: left; min-width: 100%">
             <hr style="border-color: black; min-width: 80%;">
           </div>
@@ -113,6 +135,7 @@
 
 <script>
 import { defineComponent, ref, onMounted, watchEffect } from 'vue';
+import { api } from 'src/boot/axios';
 
 export default defineComponent({
   name: 'IndexPage',
@@ -131,6 +154,9 @@ export default defineComponent({
     ])
     const selectedTime = ref("")
     const testData = ref([1, 2, 3])
+    const bookingData = ref({})
+    const myBookings = ref({})
+    const test = ref(false)
 
 
     onMounted(async () => {
@@ -138,6 +164,9 @@ export default defineComponent({
       date.value = today.getFullYear() + '/' + 
                       String(today.getMonth() + 1).padStart(2, '0') + '/' + 
                       String(today.getDate()).padStart(2, '0');
+      bookingData.value = (await api.get('/api/getAllTables')).data.data
+      myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
+      myBookings.value = formatBookingTimes(myBookings.value)
     })
 
     watchEffect(() => {
@@ -157,6 +186,30 @@ export default defineComponent({
       console.log("Tisch buchen am "+date.value+" von "+starttime.value+"-"+endtime.value+" Uhr")
     }
 
+    function formatBookingTimes(bookings) {
+      return bookings.map(booking => {
+          return {
+              ...booking,
+              startTime: formatDateTime(booking.startTime),
+              endTime: formatDateTime(booking.endTime)
+          }
+      });
+    }
+
+    function formatDateTime(dateString) {
+      const date = new Date(dateString);
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+
+      return `${year}/${month}/${day} ${hours}:${minutes}`;
+    }
+
+
     return {
       date,
       name,
@@ -165,6 +218,9 @@ export default defineComponent({
       endtime,
       otherTimeOptions,
       selectedTime,
+      bookingData,
+      myBookings,
+      test,
       bookTable
     }
   }
@@ -233,6 +289,8 @@ export default defineComponent({
   max-height: 60%;
   max-width: 80%;
   display: flex;
+  flex-direction: column;
+  border-radius: 20px;
 }
 
 .overline {
@@ -283,7 +341,7 @@ export default defineComponent({
   max-height: fit-content;
   display: flex;
   align-items: center;
-  justify-content: left;
+  justify-content: space-between;
   margin-bottom: 8px;
 }
 
