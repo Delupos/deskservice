@@ -114,28 +114,47 @@
       </div>
 
 
-      <div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
+      <div style="display: flex; justify-content: center; flex-direction: column; align-items: center; width: fit-content;">
         <h6 style="margin: 40px 0 0 0;">Hallo {{ name }}</h6>
         <h6 style="margin: 0px;">Ihre heutige Buchung:</h6>
-        <h6 style="margin: 0px;"></h6>
-      </div>
-
-      <div
-        style="display:flex; min-width: 90%; min-height: fit-content; background-color: white; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center; background-color: #D9DBF1;">
-        <h6 style="margin: 20px 0 0 0;">Alle Buchungen</h6>
-
-        <div class="bookingCard" v-for="i in myBookings" v-bind:key="i">
+        <div class="bookingCard" v-if="todaysBooking">
           <div class="bookingCardTitle">
             <div style="display: flex; align-items: center;">
               <img src="/date_range.png" style="width: 32px;">
-              <a style="margin-left: 12px; font-size: medium;">Sitzplatz: {{ i.table.seatId }}</a>
+              <a style="margin-left: 12px; font-size: medium;">Sitzplatz: {{ todaysBooking.table.seatId }}</a>
             </div>
-            <a>{{ i.table.place }}</a>
+            <a>{{ todaysBooking.table.place }}</a>
           </div>
-          <a>{{ i.startTime }} - {{ i.endTime }}</a>
-          <div style="display: flex; justify-content: left; min-width: 100%">
-            <hr style="border-color: black; min-width: 80%;">
+          <a>{{ todaysBooking.formattedStartTime }} - {{ todaysBooking.formattedEndTime }}</a>
+        </div>
+
+        <div v-else>
+          Sie haben heute leider keinen Sitzplatz
+        </div>
+      </div>
+
+      <div
+        style="display:flex; min-width: 90%; min-height: fit-content; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center; background-color: #D9DBF1;">
+        <h6 style="margin: 20px 0 0 0;">Alle Buchungen</h6>
+
+        <div v-if="myBookings">
+          <div class="bookingCard" v-for="i in myBookings" v-bind:key="i">
+            <div class="bookingCardTitle">
+              <div style="display: flex; align-items: center;">
+                <img src="/date_range.png" style="width: 32px;">
+                <a style="margin-left: 12px; font-size: medium;">Sitzplatz: {{ i.table.seatId }}</a>
+              </div>
+              <a>{{ i.table.place }}</a>
+            </div>
+            <a>{{ i.startTime }} - {{ i.endTime }}</a>
+            <div style="display: flex; justify-content: left; min-width: 100%">
+              <hr style="border-color: black; min-width: 80%;">
+            </div>
           </div>
+        </div>
+
+        <div v-else>
+          <h4>Keine Buchungen</h4>
         </div>
       </div>
     </div>
@@ -164,6 +183,7 @@ export default defineComponent({
     const testData = ref([1, 2, 3])
     const bookingData = ref({})
     const myBookings = ref({})
+    const todaysBooking = ref(null)
     const test = ref(false)
     const attributesToBookTable = ref({
       selectedTableId: false,
@@ -171,24 +191,24 @@ export default defineComponent({
       endTime: '16:00',
       date: ""
     })
-    const todaysBooking = ref("None")
+
 
     onMounted(async () => {
-      name.value = token.name
-      attributesToBookTable.value.id = token.id
-      attributesToBookTable.value.date = today.getFullYear() + '/' + 
-                      String(today.getMonth() + 1).padStart(2, '0') + '/' + 
-                      String(today.getDate()).padStart(2, '0');
-      bookingData.value = (await api.get('/api/getAllTables')).data.data
-      myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
-      for (var i in myBookings.value) {
-        const bookingDate = myBookings.value[i].startTime.slice(0, 10)
-        const today = new Date().toISOString().slice(0, 10)
-        if (bookingDate === today) {
-          todaysBooking.value = myBookings.value[i]
+      try{
+        name.value = token.name
+        attributesToBookTable.value.id = token.id
+        attributesToBookTable.value.date = today.getFullYear() + '/' + 
+                        String(today.getMonth() + 1).padStart(2, '0') + '/' + 
+                        String(today.getDate()).padStart(2, '0');
+        bookingData.value = (await api.get('/api/getAllTables')).data.data
+        myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
+        checkForTodaysBooking(myBookings)
+        myBookings.value = formatBookingTimes(myBookings.value)
+      } catch (err){
+        if(err.status == 404){
+         myBookings.value = null
         }
       }
-      myBookings.value = formatBookingTimes(myBookings.value)
     })
 
     watchEffect(() => {
@@ -205,21 +225,26 @@ export default defineComponent({
     })
 
     async function bookTable() {
-      const dataForBooking = {
-        userId: attributesToBookTable.value.id,
-        tableId: attributesToBookTable.value.selectedTableId,
-        start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
-        end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
+      try{
+        const dataForBooking = {
+          userId: attributesToBookTable.value.id,
+          tableId: attributesToBookTable.value.selectedTableId,
+          start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
+          end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
+        }
+        console.log(dataForBooking)
+        await api.post('/api/createBooking', dataForBooking)
+        $q.notify({
+            message: "Erfolgreich gebucht.",
+            type: "positive",
+            timeout:2000
+        })
+        myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
+        checkForTodaysBooking()
+        myBookings.value = formatBookingTimes(myBookings.value)
+      } catch (err) {
+        console.log(err)
       }
-      console.log(dataForBooking)
-      await api.post('/api/createBooking', dataForBooking)
-      $q.notify({
-          message: "Erfolgreich gebucht.",
-          type: "positive",
-          timeout:2000
-      })
-      myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id})).data.data
-      myBookings.value = formatBookingTimes(myBookings.value)
     }
 
     function formatBookingTimes(bookings) {
@@ -245,6 +270,40 @@ export default defineComponent({
       return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
 
+    function formatTodaysBooking(booking) {
+      const pad = n => n.toString().padStart(2, '0');
+
+      const formatISO = iso => {
+        const d = new Date(iso);
+        const year  = d.getFullYear();
+        const month = pad(d.getMonth() + 1);
+        const day   = pad(d.getDate());
+        const hour  = pad(d.getHours());
+        const min   = pad(d.getMinutes());
+        return `${year}/${month}/${day} ${hour}:${min}`;
+      };
+
+      return {
+        ...booking,
+        formattedStartTime: formatISO(booking.startTime),
+        formattedEndTime:   formatISO(booking.endTime)
+      };
+    }
+
+    function checkForTodaysBooking() {
+      for (var i in myBookings.value) {
+        const bookingDate = myBookings.value[i].startTime.slice(0, 10)
+        const today = new Date().toISOString().slice(0, 10)
+        if (bookingDate === today) {
+          todaysBooking.value = myBookings.value[i]
+          const index = myBookings.value.findIndex(item => item.id === todaysBooking.value.id)
+          if (index !== -1) {
+            myBookings.value.splice(index, 1)
+          }
+        }
+      }
+      todaysBooking.value = formatTodaysBooking(todaysBooking.value)
+    }
 
     return {
       name,
