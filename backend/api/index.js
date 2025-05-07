@@ -13,6 +13,7 @@ const routeGetAllTable = require('../api/table/getAllTables')
 const routeCreateBooking = require('../api/bookings/createBooking')
 const routeGetAllBookings = require('../api/bookings/getBookings')
 const routeGetSpecificBooking = require('../api/bookings/getSpecificBookings')
+const routeCheckForFreeTable = require('../api/bookings/checkForFreeTable')
 
 // Set Routes
 router.use('/createUser', routeCreateUser)
@@ -26,5 +27,6 @@ router.use('/getAllTables', routeGetAllTable)
 router.use('/createBooking', routeCreateBooking)
 router.use('/getAllBookings', routeGetAllBookings)
 router.use('/getSpecificBookings', routeGetSpecificBooking)
+router.use('/checkForFreeTable', routeCheckForFreeTable)
 
 module.exports = router

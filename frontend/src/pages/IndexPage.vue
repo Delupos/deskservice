@@ -38,11 +38,12 @@
             <q-item>
               <q-item-section>{{ data["seatId"] }}</q-item-section>
               <q-item-section>{{ data["place"] }}</q-item-section>
-              <q-item-section>Status</q-item-section>
+              <q-item-section>{{ data.isFree ? 'Frei' : 'Besetzt' }}</q-item-section>
               <q-item-section>
                 <q-checkbox v-model="test"
                   :model-value="attributesToBookTable.selectedTableId === data.id"
                   @update:model-value="val => attributesToBookTable.selectedTableId = val ? data.id : null"
+                  :disable="!data.isFree"
                 />
               </q-item-section>
             </q-item>
@@ -79,7 +80,7 @@
               <template v-slot:append>
                 <q-icon name="access_time" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-time v-model="attributesToBookTable.endtime">
+                    <q-time v-model="attributesToBookTable.endTime">
                       <div class="row items-center justify-end">
                         <q-btn v-close-popup label="Close" color="primary" flat />
                       </div>
@@ -99,7 +100,8 @@
 
       </div>
 
-      <div style="display: flex; min-width: 100%; justify-content: center;">
+      <div style="display: flex; min-width: 100%; justify-content: space-around">
+        <q-btn label="Prüfen" id="3" name="book" class="bookbutton" style="background-color: #D9DBF1; color: black;" @click="checkAvailabiliy()"></q-btn>
         <q-btn label="Buchen" id="3" name="book" class="bookbutton" style="background-color: #D9DBF1; color: black;" @click="bookTable()"></q-btn>
       </div>
 
@@ -191,6 +193,7 @@ export default defineComponent({
       endTime: '16:00',
       date: ""
     })
+    // const allFreeTables = ref()
 
 
     onMounted(async () => {
@@ -209,6 +212,10 @@ export default defineComponent({
          myBookings.value = null
         }
       }
+      const startTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime) + "+02"
+      const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) + "+02"
+
+      await enrichWithAvailability(startTime1, endTime1)
     })
 
     watchEffect(() => {
@@ -305,6 +312,34 @@ export default defineComponent({
       todaysBooking.value = formatTodaysBooking(todaysBooking.value)
     }
 
+    function convertDateStringToLocalISO(input) {
+      const [datePart, timePart] = input.split(' ')
+      const [year, month, day]   = datePart.split('/').map(s => s.padStart(2, '0'))
+      const [hour, minute]       = timePart.split(':').map(s => s.padStart(2, '0'))
+
+      // setze Sekunden immer auf "00"
+      return `${year}-${month}-${day}T${hour}:${minute}:00`
+    }
+
+    async function enrichWithAvailability(startTime1, endTime1) {
+      for (let i = 0; i < bookingData.value.length; i++) {
+        const table = bookingData.value[i]
+        const { data } = await api.post('/api/checkForFreeTable', {
+          tableId:   table.id,
+          startTime: startTime1,
+          endTime:   endTime1
+        })
+        table.isFree = data.isFree
+      }
+    }
+
+    async function checkAvailabiliy(){
+      const startTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime) + "+02"
+      const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) + "+02"
+
+      await enrichWithAvailability(startTime1, endTime1)
+    }
+
     return {
       name,
       testData,
@@ -316,6 +351,7 @@ export default defineComponent({
       attributesToBookTable,
       todaysBooking,
       bookTable,
+      checkAvailabiliy,
       thumbStyle: {
           right: '4px',
           borderRadius: '5px',

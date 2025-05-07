@@ -62,7 +62,7 @@
           <q-input filled dense v-model="createNewTable.seatId" autofocus label='Tischnummer:'></q-input>
       </q-card-section>
       <q-card-section class="q-pt-none">
-          <q-input filled dense v-model="createNewTable.place" autofocus label='Straße von Standort:'></q-input>
+          <q-input filled dense v-model="createNewTable.place" autofocus label='Stadt von Standort:'></q-input>
       </q-card-section>
       <q-card-section class="q-pt-none">
           <q-input filled dense v-model="createNewTable.street" autofocus label='Straße (Optional):'></q-input>
