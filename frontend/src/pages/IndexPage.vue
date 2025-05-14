@@ -233,8 +233,8 @@ export default defineComponent({
         attributesToBookTable.value.date = today.getFullYear() + '/' +
           String(today.getMonth() + 1).padStart(2, '0') + '/' +
           String(today.getDate()).padStart(2, '0');
-        bookingData.value = (await api.get('/api/getAllTables')).data.data
-        myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id })).data.data
+        bookingData.value = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
+        myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         checkForTodaysBooking(myBookings)
         myBookings.value = formatBookingTimes(myBookings.value)
       } catch (err) {
@@ -284,14 +284,14 @@ export default defineComponent({
           start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
           end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
         }
-        console.log(dataForBooking)
-        await api.post('/api/createBooking', dataForBooking)
+        // console.log(dataForBooking)
+        await api.post('/api/createBooking', dataForBooking, {headers: {"authorization": localStorage.getItem('accesstoken')}})
         $q.notify({
           message: "Erfolgreich gebucht.",
           type: "positive",
           timeout: 2000
         })
-        myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id })).data.data
+        myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         checkForTodaysBooking()
         myBookings.value = formatBookingTimes(myBookings.value)
       } catch (err) {
@@ -379,7 +379,7 @@ export default defineComponent({
           tableId: table.id,
           startTime: startTime1,
           endTime: endTime1
-        })
+        }, {headers: {"authorization": localStorage.getItem('accesstoken')}})
         table.isFree = data.isFree
         currentData.value.push({
           tableId: table.id,
@@ -421,8 +421,8 @@ export default defineComponent({
 
     async function deleteBooking(booking) {
       try {
-        await api.delete(`/api/deleteBooking?id=${booking.id}`)
-        myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id })).data.data
+        await api.delete(`/api/deleteBooking?id=${booking.id}`,{headers: {"authorization": localStorage.getItem('accesstoken')}})
+        myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         checkForTodaysBooking()
         myBookings.value = formatBookingTimes(myBookings.value)
         $q.notify({
@@ -430,8 +430,10 @@ export default defineComponent({
           type: "positive",
           timeout: 2000
         })
-      } catch {
-        todaysBooking.value = null
+      } catch (err) {
+        if(err.status == 404) {
+          todaysBooking.value = null
+        }
       }
     }
 

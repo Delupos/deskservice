@@ -153,7 +153,7 @@ export default defineComponent({
 
     async function createTable() {
       try {
-        api.post('/api/createTable', createNewTable.value)
+        api.post('/api/createTable', createNewTable.value, {headers: {"authorization": localStorage.getItem('accesstoken')}})
         createNewTable.value = {
           seatId: "",
           place: "",
@@ -175,7 +175,7 @@ export default defineComponent({
 
     async function loadAllUserData() {
       try {
-        const result = (await api.get('/api/getAllUser')).data.data
+        const result = (await api.get('/api/getAllUser', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         for (let i = 0; i<result.length; i+=1){
           userData.value.push(
             {
