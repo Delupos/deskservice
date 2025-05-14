@@ -32,7 +32,11 @@ router.post('/', async (req, res, next) => {
 
     const isFree = !conflict
 
-    return res.json({ tableId, isFree })
+    return res.status(200).json({ 
+      tableId, 
+      isFree,
+      data: conflict
+    })
   }
   catch (err) {
     next(err)

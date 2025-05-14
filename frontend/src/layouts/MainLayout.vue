@@ -43,7 +43,7 @@
 
 
     <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
-      <q-card style="min-width: 500px; min-height: fit-content; max-height: 600px ; padding: 16px;">
+      <q-card style="min-width: 600px; min-height: fit-content; max-height: 600px ; padding: 16px;">
         <q-table
           title="Alle Nutzer:"
           :rows="userData"
@@ -88,7 +88,7 @@ export default defineComponent({
 
   setup() {
     const $q = useQuasar()
-    const title = ref("Desk-Service")
+    const title = ref("SmartSeat")
     const version = ref("1.0")
     const verOrBtn = ref(false)
     const router = useRouter()
@@ -113,6 +113,7 @@ export default defineComponent({
       },
       { name: 'vorname', align: 'center', label:'Vorname', field: 'vorname',  sortable: true },
       { name: 'nachname', label: 'Nachname', field: 'nachname',  sortable: true },
+      { name: 'blocked', label: 'Blockiert', field: 'blocked', sortable: true}
     ]
     const userData = ref([])
 
@@ -180,7 +181,8 @@ export default defineComponent({
             {
               name: result[i].email,
               vorname: result[i].name,
-              nachname: result[i].surname
+              nachname: result[i].surname,
+              blocked: result[i].blocked
             }
           )
         }

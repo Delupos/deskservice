@@ -4,7 +4,7 @@
             <div
                 style="min-height: 120px; max-height: 120px; min-width: max-content; display: flex; align-items: center; justify-content: left;">
                 <h3 style="margin: 0px; margin-left: -8px;">
-                    Desk-Service
+                    SmartSeat
                 </h3>
             </div>
             <div class="content-rows">

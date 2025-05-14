@@ -14,6 +14,7 @@ const routeCreateBooking = require('../api/bookings/createBooking')
 const routeGetAllBookings = require('../api/bookings/getBookings')
 const routeGetSpecificBooking = require('../api/bookings/getSpecificBookings')
 const routeCheckForFreeTable = require('../api/bookings/checkForFreeTable')
+const routeDeleteBooking = require('../api/bookings/deleteBooking')
 
 // Set Routes
 router.use('/createUser', routeCreateUser)
@@ -28,5 +29,6 @@ router.use('/createBooking', routeCreateBooking)
 router.use('/getAllBookings', routeGetAllBookings)
 router.use('/getSpecificBookings', routeGetSpecificBooking)
 router.use('/checkForFreeTable', routeCheckForFreeTable)
+router.use('/deleteBooking', routeDeleteBooking)
 
 module.exports = router
