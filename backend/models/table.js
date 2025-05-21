@@ -22,6 +22,11 @@ const table = db.define('table',
         street: {
             type: sequelize.STRING,
             allowNull: true
+        },
+        meetingRoom: {
+            type: sequelize.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
         }
     }, 
     { tableName: 'table'}

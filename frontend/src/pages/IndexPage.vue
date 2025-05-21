@@ -22,16 +22,16 @@
 
       <div class="deskview">
 
-        <q-list class="q-pa-md">
+        <!-- <q-list class="q-pa-md">
           <q-item>
             <q-item-section>Tisch</q-item-section>
             <q-item-section>Ort</q-item-section>
             <q-item-section>Status</q-item-section>
             <q-item-section>Buchen</q-item-section>
           </q-item>
-        </q-list>
+        </q-list> -->
 
-        <q-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle"
+        <!-- <q-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle"
           style="max-height: 84%; min-height: 84%; width: 100%; overflow-y: auto; display: flex; flex-wrap: wrap;">
           <q-list class="q-pa-md" v-for="data in bookingData" v-bind:key="data">
             <q-item>
@@ -48,7 +48,46 @@
               </q-item-section>
             </q-item>
           </q-list>
-        </q-scroll-area>
+        </q-scroll-area> -->
+
+        <div style="height: 50vh; display: flex; flex-direction: column;">
+          <q-scroll-area style="flex-grow: 1;">
+            <div v-if="dataReady">
+              <div class="grid-container">
+                <div
+                  v-for="data in bookingData"
+                  :key="data.id"
+                  class="seat-card"
+                  :class="{
+                    occupied: !isTableFree(data.id),
+                    selected: attributesToBookTable.selectedTableId === data.id,
+                    highlight: attributesToBookTable.selectedTableId === data.id
+                  }"
+                  @click="handleSeatClick(data)"
+                >
+                  <q-card flat bordered class="seat-content"  @mouseenter="openDialog(data)">
+                    <div class="text-h6">{{ data.seatId }}</div>
+                    <div class="text-subtitle2">{{ data.place }}</div>
+                    <div class="text-caption">
+                      {{ data.meetingRoom ? 'Meetinraum' : 'Einzelplatz' }}
+                    </div>
+                    <div class="text-caption">
+                      {{ isTableFree(data.id) ? 'Frei' : 'Besetzt' }}
+                    </div>
+
+                    <q-tooltip v-if="!data.isFree" anchor="bottom middle" self="top middle" :offset="[0, 10]">
+                      Besetzt von {{ windowData.startTime }} - {{ windowData.endTime }}
+                    </q-tooltip>
+                  </q-card>
+                </div>
+              </div>
+            </div>
+            <div v-else>
+              <q-spinner size="30px" color="primary" />
+              <p>Verfügbarkeiten werden geladen ...</p>
+            </div>
+          </q-scroll-area>
+          </div>
       </div>
 
 
@@ -132,7 +171,7 @@
           </div>
           <div style="min-width: 100%; display: flex; justify-content: space-between;">
             <a>{{ todaysBooking.formattedStartTime }} - {{ todaysBooking.formattedEndTime }}</a>
-            <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px;" @click="deleteBooking(todaysBooking)">
+            <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="deleteBooking(todaysBooking)">
               <q-tooltip>Buchung hier löschen</q-tooltip>
             </q-btn>
           </div>
@@ -160,7 +199,7 @@
               </div>
               <div style="min-width: 100%; display: flex; justify-content: space-between;">
                 <a>{{ i.startTime }} - {{ i.endTime }}</a>
-                <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px;" @click="deleteBooking(i)">
+                <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="deleteBooking(i)">
                   <q-tooltip>Buchung hier löschen</q-tooltip>
                 </q-btn>
               </div>
@@ -178,14 +217,6 @@
       </div>
     </div>
   </q-page>
-
-  <q-dialog v-model="windowTakenSeat">
-    <q-card>
-      <q-card-section>
-        <div class="text-h6">{{ windowData.startTime }} - {{ windowData.endTime }}</div>
-      </q-card-section>
-    </q-card>
-  </q-dialog>
 </template>
 
 <script>
@@ -213,18 +244,18 @@ export default defineComponent({
     const todaysBooking = ref(null)
     const selectedCheckBox = ref(false)
     const attributesToBookTable = ref({
-      selectedTableId: false,
+      selectedTableId: null,
       startTime: '08:00',
       endTime: '16:00',
       date: ""
     })
     const hover = ref(false)
-    const windowTakenSeat = ref(false)
     const windowData = ref({
       startTime: "",
       endTime: ""
     })
     const currentData = ref([])
+    const dataReady = ref(false)
 
     onMounted(async () => {
       try {
@@ -246,6 +277,7 @@ export default defineComponent({
       const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) + "+02"
 
       await enrichWithAvailability(startTime1, endTime1)
+      console.log(bookingData.value)
     })
 
     watch(() => attributesToBookTable.value.date, async () => {
@@ -284,16 +316,20 @@ export default defineComponent({
           start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
           end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
         }
-        // console.log(dataForBooking)
+        console.log(dataForBooking)
         await api.post('/api/createBooking', dataForBooking, {headers: {"authorization": localStorage.getItem('accesstoken')}})
         $q.notify({
           message: "Erfolgreich gebucht.",
           type: "positive",
           timeout: 2000
         })
+        bookingData.value = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         checkForTodaysBooking()
         myBookings.value = formatBookingTimes(myBookings.value)
+
+        await checkAvailabiliy()
+        attributesToBookTable.value.selectedTableId = false
       } catch (err) {
         console.log(err)
       }
@@ -386,6 +422,7 @@ export default defineComponent({
           data: data
         })
       }
+      dataReady.value = true;
     }
 
     async function checkAvailabiliy() {
@@ -395,10 +432,10 @@ export default defineComponent({
       await enrichWithAvailability(startTime1, endTime1)
     }
 
-    async function openDialog(id) {
-      windowTakenSeat.value = true
+    async function openDialog(data) {
+      if(data.isFree == true) {return}
       for (var entry in currentData.value) {
-        if (currentData.value[entry].tableId == id) {
+        if (currentData.value[entry].tableId == data.id) {
           windowData.value.startTime = addHoursToTime(
             currentData.value[entry].data.data.startTime.slice(11, 16), 2)
           windowData.value.endTime = addHoursToTime(
@@ -423,6 +460,7 @@ export default defineComponent({
       try {
         await api.delete(`/api/deleteBooking?id=${booking.id}`,{headers: {"authorization": localStorage.getItem('accesstoken')}})
         myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
+        bookingData.value = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         checkForTodaysBooking()
         myBookings.value = formatBookingTimes(myBookings.value)
         $q.notify({
@@ -430,10 +468,29 @@ export default defineComponent({
           type: "positive",
           timeout: 2000
         })
+        await checkAvailabiliy()
+        attributesToBookTable.value.selectedTableId = false
       } catch (err) {
         if(err.status == 404) {
           todaysBooking.value = null
         }
+      }
+    }
+
+    function isTableFree(id) {
+      const entry = currentData.value.find(e => e.tableId === id);
+      return entry?.data?.isFree ?? false;
+    }
+
+    function handleSeatClick(data) {
+      if(data.isFree == false){
+        openDialog(data.id)
+        return
+      }
+      if(attributesToBookTable.value.selectedTableId == data.id) {
+        attributesToBookTable.value.selectedTableId = false
+      } else {
+        attributesToBookTable.value.selectedTableId = data.id
       }
     }
 
@@ -449,11 +506,13 @@ export default defineComponent({
       todaysBooking,
       hover,
       windowData,
-      windowTakenSeat,
+      dataReady,
       openDialog,
       bookTable,
       checkAvailabiliy,
       deleteBooking,
+      isTableFree,
+      handleSeatClick,
       thumbStyle: {
         right: '4px',
         borderRadius: '5px',
@@ -495,7 +554,7 @@ export default defineComponent({
 
 .table {
   flex: 2 1 0;
-  min-width: 620px;
+  /* min-width: 620px; */
   background-color: #E7ECF3;
   border-radius: 40px;
   display: flex;
@@ -593,5 +652,39 @@ export default defineComponent({
   padding: 0;
   border-top: 1px solid #000000;
   width: 100%;
+}
+
+/** Tabledesign --------------------------------------------- */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.seat-card {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.seat-card:hover {
+  transform: scale(1.03);
+}
+
+.seat-content {
+  padding: 12px;
+  text-align: center;
+  border-radius: 8px;
+  background-color: #e0f7fa;
+}
+
+.seat-card.occupied .seat-content {
+  background-color: #f28b82;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.seat-card.highlight .seat-content {
+  background-color: #fff9c4;
 }
 </style>

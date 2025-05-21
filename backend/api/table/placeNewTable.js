@@ -11,10 +11,11 @@ const table = require('../../models/table');
  */
 router.post('/', async(req, res) => {
     try {
-        console.log("Test")
+
         const temp = {
             seatId: req.body.seatId,
             place: req.body.place,
+            meetingRoom: req.body.meetingRoom
         }
 
         if(!req.body.place) {

@@ -43,13 +43,19 @@
 
 
     <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
-      <q-card style="min-width: 600px; min-height: fit-content; max-height: 600px ; padding: 16px;">
+      <q-card style="min-width: 800px; min-height: fit-content; max-height: 600px ; padding: 16px;">
         <q-table
           title="Alle Nutzer:"
           :rows="userData"
           :columns="columns"
           row-key="email"
-        />
+        >
+          <template v-slot:body-cell-actions="props">
+            <q-td :props="props">
+              <q-btn style="background-color: #D9DBF1;" label="Ändern" @click="blockUnblockUser(props.row)" size="sm" />
+            </q-td>
+          </template>
+        </q-table>
       </q-card>
   </q-dialog>
 
@@ -59,13 +65,16 @@
         <h6>Lege einen neuen Tisch an:</h6>  
       </q-card-section>
       <q-card-section class="q-pt-none">
-          <q-input filled dense v-model="createNewTable.seatId" autofocus label='Tischnummer:'></q-input>
+        <q-input filled dense v-model="createNewTable.seatId" autofocus label='Tischnummer:'></q-input>
       </q-card-section>
       <q-card-section class="q-pt-none">
-          <q-input filled dense v-model="createNewTable.place" autofocus label='Stadt von Standort:'></q-input>
+        <q-input filled dense v-model="createNewTable.place" autofocus label='Stadt von Standort:'></q-input>
       </q-card-section>
       <q-card-section class="q-pt-none">
-          <q-input filled dense v-model="createNewTable.street" autofocus label='Straße (Optional):'></q-input>
+        <q-input filled dense v-model="createNewTable.street" autofocus label='Straße (Optional):'></q-input>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <a style="margin-left: 4px;">Handelt es sich um ein Meetingraum: </a> <q-checkbox v-model="createNewTable.meetingRoom"></q-checkbox>
       </q-card-section>
       <q-card-actions style="display: flex; justify-content: space-between;">
           <q-btn flat label='Schließen' v-close-popup no-caps></q-btn>
@@ -99,7 +108,8 @@ export default defineComponent({
     const createNewTable = ref({
       seatId: "",
       place: "",
-      street: ""
+      street: "",
+      meetingRoom: false
     })
     const columns = [
       {
@@ -113,7 +123,8 @@ export default defineComponent({
       },
       { name: 'vorname', align: 'center', label:'Vorname', field: 'vorname',  sortable: true },
       { name: 'nachname', label: 'Nachname', field: 'nachname',  sortable: true },
-      { name: 'blocked', label: 'Blockiert', field: 'blocked', sortable: true}
+      { name: 'blocked', label: 'Blockiert', field: 'blocked', sortable: true},
+      { name: 'actions', label: 'Blockieren/ Freigeben', field: 'actions', align: 'right' }
     ]
     const userData = ref([])
 
@@ -157,7 +168,8 @@ export default defineComponent({
         createNewTable.value = {
           seatId: "",
           place: "",
-          street: ""
+          street: "",
+          meetingRoom: false,
         }
         $q.notify({
             message: "Erfolgreich erstellt.",
@@ -191,6 +203,23 @@ export default defineComponent({
       }
     }
 
+    async function blockUnblockUser(user) {
+      const data = ref({
+        email: user.name,
+        blocked: !user.blocked
+      })
+      await api.post('/api/blockUser', data.value)
+      
+      userData.value = []
+      await loadAllUserData()
+
+      $q.notify({
+            message: "Status wurde geändert.",
+            type: "positive",
+            timeout:2000
+        })      
+    }
+
     function logout() {
       localStorage.clear()
       router.push('../login')
@@ -210,6 +239,7 @@ export default defineComponent({
       showUserDialog,
       showTableDialog,
       createTable,
+      blockUnblockUser,
     }
 
   }
