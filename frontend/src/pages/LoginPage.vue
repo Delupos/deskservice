@@ -21,7 +21,7 @@
             </div>
             <div class="content-rows" style="margin-top: 4px;">
                 <q-btn label="Einloggen" no-caps
-                    style="border-radius: 20px; background-color: #0068AE; color: white; font-size: medium; min-width: 50%;"
+                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;"
                     @click="Login()" />
             </div>
 
@@ -29,9 +29,9 @@
 
             <div class="content-rows">
                 <q-btn label="Passwort vergessen" no-caps
-                    style="border-radius: 20px; background-color: #0068AE; color: white; font-size: medium; min-width: 50%;" />
+                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;" />
                 <q-btn label="Account erstellen" no-caps @click="displayCreateAccount()"
-                    style="border-radius: 20px; background-color: #0068AE; color: white; font-size: medium; min-width: 50%;" />
+                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;" />
             </div>
         </div>
     </q-page>

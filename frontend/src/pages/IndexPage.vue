@@ -5,7 +5,7 @@
       <img src="/logo1.jpeg" style="width: 260px; margin-top: 100px; margin-bottom: 40px;">
       <div class="q-pa-md">
         <div class="q-gutter-md row items-start">
-          <q-date v-model="attributesToBookTable.date" minimal style="background-color: #D9DBF1; color: black;" />
+          <q-date v-model="attributesToBookTable.date" minimal style="background-color: #17354f; color: white;" />
         </div>
       </div>
       <h6 style="margin: 0px; margin-top: 20px;">Ihr ausgewähltes Datum:</h6>
@@ -24,7 +24,7 @@
       <div class="deskview">
 
         <div style="height: 50vh; display: flex; flex-direction: column;">
-          <q-scroll-area style="flex-grow: 1; height: 100%;">
+          <q-scroll-area style="flex-grow: 1; height: 100%;" :thumb-style="thumbStyle" :bar-style="barStyle">
             <div v-if="!isLoading">
               <div class="grid-container">
                 <div
@@ -128,7 +128,7 @@
       </div>
 
       <div style="display: flex; min-width: 100%; justify-content: space-around; margin-bottom: 68px;">
-        <q-btn label="Buchen" id="3" name="book" class="bookbutton" style="background-color: #D9DBF1; color: black;"
+        <q-btn label="Buchen" id="3" name="book" class="bookbutton" style="background-color: #17354f; color: white;"
           @click="bookTable()"></q-btn>
       </div>
 
@@ -153,6 +153,7 @@
               <img src="/date_range.png" style="width: 32px;">
               <a style="margin-left: 12px; font-size: medium;">Sitzplatz: {{ todaysBooking.table.seatId }}</a>
             </div>
+            <a>{{ todaysBooking.table.meetingRoom ? 'MR' : ''}}</a>
             <a>{{ todaysBooking.table.place }}</a>
           </div>
           <div style="min-width: 100%; display: flex; justify-content: space-between;">
@@ -169,8 +170,8 @@
       </div>
 
       <div
-        style="display:flex; min-width: 90%; min-height: fit-content; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center; background-color: #D9DBF1;">
-        <h6 style="margin: 20px 0 0 0;">Alle Buchungen</h6>
+        style="display:flex; min-width: 90%; min-height: fit-content; border-radius: 20px; justify-content: center; padding: 0 12px 0 12px; flex-direction: column; align-items: center; background-color: #17354f; margin-bottom: 16px;">
+        <h6 style="margin: 20px 0 0 0; color: white">Alle Buchungen</h6>
 
         <div v-if="myBookings && myBookings.length"
           style="width: 100%; height: fit-content; max-height: 400px; min-height: 400px;">
@@ -178,19 +179,20 @@
             <div class="bookingCard" v-for="(i, index) in myBookings" :key="i.id">
               <div class="bookingCardTitle">
                 <div style="display: flex; align-items: center;">
-                  <img src="/date_range.png" style="width: 32px;">
-                  <a style="margin-left: 12px; font-size: medium;">Sitzplatz: {{ i.table.seatId }}</a>
+                  <img src="/date_range1.png" style="width: 32px;">
+                  <a style="margin-left: 12px; font-size: medium; color: white;">Sitzplatz: {{ i.table.seatId }}</a>
                 </div>
-                <a>{{ i.table.place }}</a>
+                <a style="color: white;">{{ i.table.meetingRoom ? 'MR' : ''}}</a>
+                <a style="color: white;">{{ i.table.place }}</a>
               </div>
               <div style="min-width: 100%; display: flex; justify-content: space-between;">
-                <a>{{ i.startTime }} - {{ i.endTime }}</a>
+                <a style=" color: white;">{{ i.startTime }} - {{ i.endTime }}</a>
                 <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="confirmDeletion(i)">
                   <q-tooltip>Buchung hier löschen</q-tooltip>
                 </q-btn>
               </div>
               <div v-if="index < myBookings.length - 1" style="display: flex; justify-content: left; min-width: 100%">
-                <hr style="border-color: black; min-width: 80%;">
+                <hr style="border-color: white; min-width: 80%;">
               </div>
             </div>
           </q-scroll-area>
@@ -278,7 +280,7 @@ export default defineComponent({
 
       await enrichWithAvailability(startTime1, endTime1)
 
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 300));
       isLoading.value = false
       grantAllowanceToLoad.value = true
     })
@@ -330,23 +332,54 @@ export default defineComponent({
           start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
           end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
         }
-        console.log(dataForBooking)
-        await api.post('/api/createBooking', dataForBooking, {headers: {"authorization": localStorage.getItem('accesstoken')}})
-        $q.notify({
-          message: "Erfolgreich gebucht.",
-          type: "positive",
-          timeout: 2000
-        })
-        bookingData.value = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
-        myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
-        checkForTodaysBooking()
-        myBookings.value = formatBookingTimes(myBookings.value)
-
-        await checkAvailabiliy()
-        attributesToBookTable.value.selectedTableId = false
+        if(isValidTimeRange(dataForBooking.start, dataForBooking.end)) {
+          await api.post('/api/createBooking', dataForBooking, {headers: {"authorization": localStorage.getItem('accesstoken')}})
+          $q.notify({
+            message: "Erfolgreich gebucht.",
+            type: "positive",
+            timeout: 2000
+          })
+          bookingData.value = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
+          myBookings.value = (await api.post('/api/getSpecificBookings', { id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
+          checkForTodaysBooking()
+          myBookings.value = formatBookingTimes(myBookings.value)
+  
+          await checkAvailabiliy()
+          attributesToBookTable.value.selectedTableId = false
+        } else {
+          $q.notify({
+            message: "Falsche Uhrzeit angegeben.",
+            type: "negative",
+            timeout: 2000
+          })
+        }
       } catch (err) {
-        console.log(err)
+        if(err.response.data.error.name == "SequelizeValidationError"){
+          $q.notify({
+            message: "Bitte Tisch auswählen.",
+            type: "negative",
+            timeout: 2000
+          })
+        }
+        // console.log(err)
       }
+    }
+
+    function isValidTimeRange(startStr, endStr) {
+      const start = new Date(startStr.replace(/[/]/g, '-'));
+      const end = new Date(endStr.replace(/[/]/g, '-'));
+
+      if (end <= start) {
+        return false;
+      }
+
+      const isSameDay = (
+        start.getFullYear() === end.getFullYear() &&
+        start.getMonth() === end.getMonth() &&
+        start.getDate() === end.getDate()
+      );
+
+      return isSameDay;
     }
 
     function formatBookingTimes(bookings) {
@@ -539,7 +572,7 @@ export default defineComponent({
         borderRadius: '5px',
         width: '5px',
         opacity: 0.75,
-        backgroundColor: '#027be3',
+        backgroundColor: '#17354f',
       },
       barStyle: {
         right: '2px',
@@ -566,7 +599,7 @@ export default defineComponent({
 .calender {
   flex: 1 1 0;
   min-width: 320px;
-  background-color: #E7ECF3;
+  background-color: #E0E0E0;
   border-radius: 40px;
   display: flex;
   flex-direction: column;
@@ -576,8 +609,7 @@ export default defineComponent({
 
 .table {
   flex: 2 1 0;
-  /* min-width: 620px; */
-  background-color: #E7ECF3;
+  background-color: #E0E0E0;
   border-radius: 40px;
   display: flex;
   flex-direction: column;
@@ -587,7 +619,7 @@ export default defineComponent({
 .bookings {
   flex: 1 1 0;
   min-width: 300px;
-  background-color: #E7ECF3;
+  background-color: #E0E0E0;
   border-radius: 40px;
   display: flex;
   flex-direction: column;
@@ -633,7 +665,7 @@ export default defineComponent({
   max-width: 100%;
   min-height: 14%;
   max-height: 14%;
-  background-color: #E7ECF3;
+  background-color: #E0E0E0;
   border-top-left-radius: 40px;
   border-top-right-radius: 40px;
 }
