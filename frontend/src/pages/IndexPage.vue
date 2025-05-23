@@ -9,7 +9,8 @@
         </div>
       </div>
       <h6 style="margin: 0px; margin-top: 20px;">Ihr ausgewähltes Datum:</h6>
-      <h5 style="margin: 0px;">{{ attributesToBookTable.date }}</h5>
+      <h5 v-if="attributesToBookTable.date" style="margin: 0px;">{{ attributesToBookTable.date }}</h5>
+      <h5 v-else style="margin: 0px">Bitte ein Datum auswählen</h5>
     </div>
 
     <div class="table">
@@ -22,37 +23,9 @@
 
       <div class="deskview">
 
-        <!-- <q-list class="q-pa-md">
-          <q-item>
-            <q-item-section>Tisch</q-item-section>
-            <q-item-section>Ort</q-item-section>
-            <q-item-section>Status</q-item-section>
-            <q-item-section>Buchen</q-item-section>
-          </q-item>
-        </q-list> -->
-
-        <!-- <q-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle"
-          style="max-height: 84%; min-height: 84%; width: 100%; overflow-y: auto; display: flex; flex-wrap: wrap;">
-          <q-list class="q-pa-md" v-for="data in bookingData" v-bind:key="data">
-            <q-item>
-              <q-item-section>{{ data["seatId"] }}</q-item-section>
-              <q-item-section>
-                <p v-if="data.isFree" style="padding: 0%; margin: 0;">{{ data["place"] }}</p>
-                <s v-else style="cursor: pointer;" @click="openDialog(data.id)">{{ data["place"] }}</s>
-              </q-item-section>
-              <q-item-section>{{ data.isFree ? 'Frei' : 'Besetzt' }}</q-item-section>
-              <q-item-section>
-                <q-checkbox v-model="selectedCheckBox" :model-value="attributesToBookTable.selectedTableId === data.id"
-                  @update:model-value="val => attributesToBookTable.selectedTableId = val ? data.id : null"
-                  :disable="!data.isFree" />
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-scroll-area> -->
-
         <div style="height: 50vh; display: flex; flex-direction: column;">
-          <q-scroll-area style="flex-grow: 1;">
-            <div v-if="dataReady">
+          <q-scroll-area style="flex-grow: 1; height: 100%;">
+            <div v-if="!isLoading">
               <div class="grid-container">
                 <div
                   v-for="data in bookingData"
@@ -60,11 +33,12 @@
                   class="seat-card"
                   :class="{
                     occupied: !isTableFree(data.id),
+                    free: isTableFree(data.id),
                     selected: attributesToBookTable.selectedTableId === data.id,
                     highlight: attributesToBookTable.selectedTableId === data.id
                   }"
                   @click="handleSeatClick(data)"
-                >
+                  >
                   <q-card flat bordered class="seat-content"  @mouseenter="openDialog(data)">
                     <div class="text-h6">{{ data.seatId }}</div>
                     <div class="text-subtitle2">{{ data.place }}</div>
@@ -82,10 +56,22 @@
                 </div>
               </div>
             </div>
-            <div v-else>
-              <q-spinner size="30px" color="primary" />
-              <p>Verfügbarkeiten werden geladen ...</p>
+
+            <div v-else-if="isLoading" class="grid-container">
+              <div
+                v-for="n in 20"
+                :key="n"
+                >
+                <q-card flat bordered class="seat-content" style="background-color: #e0e0e0; display: flex; flex-direction: column; gap: 4px; align-items: center; padding: 8px;">
+                  <div class="skeleton" style="width: 100px; border-radius: 16px;">1.1</div>
+                  <div class="skeleton" style="width: 60px; border-radius: 16px;">I</div>
+                  <div class="skeleton" style="width: 80px; border-radius: 16px;">I</div>
+                  <div class="skeleton" style="width: 45px; border-radius: 16px;">I</div>
+                </q-card>
+              </div>
             </div>
+
+
           </q-scroll-area>
           </div>
       </div>
@@ -171,13 +157,13 @@
           </div>
           <div style="min-width: 100%; display: flex; justify-content: space-between;">
             <a>{{ todaysBooking.formattedStartTime }} - {{ todaysBooking.formattedEndTime }}</a>
-            <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="deleteBooking(todaysBooking)">
+            <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="confirmDeletion(todaysBooking)">
               <q-tooltip>Buchung hier löschen</q-tooltip>
             </q-btn>
           </div>
         </div>
 
-        <div v-else>
+        <div v-else style="margin: 30px 0 30px 0">
           Sie haben heute leider keinen Sitzplatz
         </div>
       </div>
@@ -199,7 +185,7 @@
               </div>
               <div style="min-width: 100%; display: flex; justify-content: space-between;">
                 <a>{{ i.startTime }} - {{ i.endTime }}</a>
-                <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="deleteBooking(i)">
+                <q-btn size="11px" icon="close" style="max-width: 28px; max-height: 28px; background-color: #F28B82;" @click="confirmDeletion(i)">
                   <q-tooltip>Buchung hier löschen</q-tooltip>
                 </q-btn>
               </div>
@@ -217,6 +203,18 @@
       </div>
     </div>
   </q-page>
+
+  <q-dialog v-model="windowDeleteBooking">
+    <q-card style="min-width: fit-content; max-height: fit-content; padding: 0px;">
+      <q-card-section style="min-height: 100px; max-height: 100px; margin-top: -30px; margin-bottom: 20px;">          
+        <h6 style="padding: 0;">Wollen Sie ihre Buchung wirklich stornieren?</h6>  
+      </q-card-section>
+      <q-card-actions style="display: flex; justify-content: space-between;">
+          <q-btn flat label='Schließen' v-close-popup no-caps></q-btn>
+          <q-btn flat label='Stornieren' v-close-popup no-caps @click="deleteBooking(booking)"></q-btn>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
@@ -238,7 +236,6 @@ export default defineComponent({
       "Den ganzen Tag",
     ])
     const selectedTime = ref("")
-    const testData = ref([1, 2, 3])
     const bookingData = ref({})
     const myBookings = ref({})
     const todaysBooking = ref(null)
@@ -255,7 +252,10 @@ export default defineComponent({
       endTime: ""
     })
     const currentData = ref([])
-    const dataReady = ref(false)
+    const isLoading = ref(true)
+    const grantAllowanceToLoad = ref(false)
+    const windowDeleteBooking = ref(false)
+    const tempBookingForDeletion = ref(null)
 
     onMounted(async () => {
       try {
@@ -277,22 +277,36 @@ export default defineComponent({
       const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) + "+02"
 
       await enrichWithAvailability(startTime1, endTime1)
-      console.log(bookingData.value)
+
+      await new Promise(resolve => setTimeout(resolve, 800));
+      isLoading.value = false
+      grantAllowanceToLoad.value = true
     })
 
     watch(() => attributesToBookTable.value.date, async () => {
-      await checkAvailabiliy()
-      attributesToBookTable.value.selectedTableId = false
+      if(!attributesToBookTable.value.date){
+        isLoading.value = true
+      } else {
+        if(grantAllowanceToLoad.value){
+          await checkAvailabiliy()
+          attributesToBookTable.value.selectedTableId = false
+          isLoading.value = false
+        }
+      }
     })
 
     watch(() => attributesToBookTable.value.startTime, async () => {
       await checkAvailabiliy()
-      attributesToBookTable.value.selectedTableId = false
+      if(!isTableFree(attributesToBookTable.value.selectedTableId)){
+        attributesToBookTable.value.selectedTableId = false
+      }
     })
 
     watch(() => attributesToBookTable.value.endTime, async () => {
       await checkAvailabiliy()
-      attributesToBookTable.value.selectedTableId = false
+      if(!isTableFree(attributesToBookTable.value.selectedTableId)){
+        attributesToBookTable.value.selectedTableId = false
+      }
     })
 
     watchEffect(() => {
@@ -422,7 +436,6 @@ export default defineComponent({
           data: data
         })
       }
-      dataReady.value = true;
     }
 
     async function checkAvailabiliy() {
@@ -456,8 +469,9 @@ export default defineComponent({
       return `${newHours}:${newMinutes}`
     }
 
-    async function deleteBooking(booking) {
+    async function deleteBooking() {
       try {
+        var booking = tempBookingForDeletion.value
         await api.delete(`/api/deleteBooking?id=${booking.id}`,{headers: {"authorization": localStorage.getItem('accesstoken')}})
         myBookings.value = (await api.post('/api/getSpecificBookings', {id: token.id }, {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
         bookingData.value = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
@@ -475,6 +489,7 @@ export default defineComponent({
           todaysBooking.value = null
         }
       }
+      tempBookingForDeletion.value = null
     }
 
     function isTableFree(id) {
@@ -494,9 +509,13 @@ export default defineComponent({
       }
     }
 
+    function confirmDeletion(booking) {
+      windowDeleteBooking.value = true
+      tempBookingForDeletion.value = booking
+    }
+
     return {
       name,
-      testData,
       otherTimeOptions,
       selectedTime,
       bookingData,
@@ -506,7 +525,9 @@ export default defineComponent({
       todaysBooking,
       hover,
       windowData,
-      dataReady,
+      isLoading,
+      windowDeleteBooking,
+      confirmDeletion,
       openDialog,
       bookTable,
       checkAvailabiliy,
@@ -550,6 +571,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 16px;
 }
 
 .table {
@@ -595,10 +617,11 @@ export default defineComponent({
 
 
 .deskview {
+  margin-top: 20px;
   background-color: white;
-  min-height: 60%;
+  min-height: 55%;
   min-width: 80%;
-  max-height: 60%;
+  max-height: 55%;
   max-width: 80%;
   display: flex;
   flex-direction: column;
@@ -676,15 +699,139 @@ export default defineComponent({
   text-align: center;
   border-radius: 8px;
   background-color: #e0f7fa;
+  transition: background-color 0.6s ease, box-shadow 0.6s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.seat-card.free .seat-content {
+  background-color: #e0f7fa; 
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 200, 100, 0.15); 
+}
+
+.seat-card.free .seat-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 260%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 10% 50%,
+    rgba(0, 200, 100, 0.3), 
+    rgba(0, 200, 100, 0) 75%
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+  
+.seat-card.free .seat-content > * {
+  position: relative;
+  z-index: 1;
 }
 
 .seat-card.occupied .seat-content {
-  background-color: #f28b82;
+  background-color: #fcebea; 
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.9;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(242, 139, 130, 0.3);
+}
+
+.seat-card.occupied .seat-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 240%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 10% 50%,
+    rgba(242, 80, 80, 0.65),
+    rgba(242, 80, 80, 0) 75%
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.seat-card.occupied .seat-content > * {
+  position: relative;
+  z-index: 1;
 }
 
 .seat-card.highlight .seat-content {
-  background-color: #fff9c4;
+  background-color: #f0fdfa;
+  box-shadow: inset 0 0 12px rgba(255, 249, 196, 0.25);
+}
+
+.seat-card.highlight .seat-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 260%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 10% 50%,
+    rgba(255, 235, 100, 0.75),
+    rgba(255, 235, 100, 0) 75%
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  animation: none;
+}
+
+.seat-card .seat-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes sunlight-sweep {
+  from {
+    left: -80%;
+  }
+  to {
+    left: 0%;
+  }
+}
+
+/** Skeletons ------------------------------------------------*/
+.skeleton {
+  background-color: #a0a0a0;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  color: transparent; 
+}
+
+.skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -150%;
+  height: 100%;
+  width: 150%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: loading-sweep 1.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes loading-sweep {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 </style>
