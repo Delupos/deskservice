@@ -22,6 +22,11 @@ const appendixImages = db.define('appendixImages',
             type: sequelize.DATE,
             allowNull: false
         },
+        place: {
+            type: sequelize.STRING,
+            allowNull: false,
+            defaultValue: 'Duesseldorf',
+        }
     },
     { tableName: 'appendixImages'}
 )

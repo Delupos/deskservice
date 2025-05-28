@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.0.1",
   "description": "An university project",
-  "productName": "Quasar App",
+  "productName": "SmartSeat",
   "author": "timm.kalesse@telekom.de <timm.kalesse@telekom.de>",
   "type": "module",
   "private": true,

@@ -17,7 +17,7 @@ router.get('/', async(req, res) => {
         let rendered = [];
         for (i in result) {
             let uintArr = new Uint8Array(result[i].image);
-            rendered.push({image: "data:image/png;base64,"+ uintArr.reduce((data, byte) => data + String.fromCharCode(byte), ''), id: result[i].id});
+            rendered.push({image: "data:image/png;base64,"+ uintArr.reduce((data, byte) => data + String.fromCharCode(byte), ''), id: result[i].id, place: result[i].place});
         }
 
         setTimeout(() => {
@@ -40,7 +40,8 @@ router.get('/', async(req, res) => {
 router.post("/", async(req, res) => {
     try {
         const appendix = await appendixImages.create({
-            image: req.body.image
+            image: req.body.image,
+            place: req.body.place
         })
 
         res.status(200).json({

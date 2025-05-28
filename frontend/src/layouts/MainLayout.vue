@@ -54,7 +54,7 @@
     </q-page-container>
 
 
-    <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
+  <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
       <q-card style="min-width: 800px; min-height: fit-content; max-height: 600px ; padding: 16px;">
         <q-table
           title="Alle Nutzer:"
@@ -88,6 +88,14 @@
       <q-card-section class="q-pt-none">
         <a style="margin-left: 4px;">Handelt es sich um ein Meetingraum: </a> <q-checkbox v-model="createNewTable.meetingRoom"></q-checkbox>
       </q-card-section>
+      <q-card-section class="q-pt-none" v-if=createNewTable.meetingRoom>
+        <q-input
+          v-model="createNewTable.seats"
+          type="number"
+          min="1"
+          label="Anzahl Sitze"
+        />
+      </q-card-section>
       <q-card-actions style="display: flex; justify-content: space-between;">
           <q-btn flat label='Schließen' v-close-popup no-caps></q-btn>
           <q-btn flat label='Erstellen' v-close-popup no-caps @click="createTable()"></q-btn>
@@ -102,6 +110,10 @@
         <q-space/>
         <q-btn flat dense icon="close" @click="openUpload = false" />
       </q-bar>
+
+      <q-card-section>
+        <q-input label="Standort" v-model="placeforImage"></q-input>
+      </q-card-section>
 
       <q-card-section>
         <q-file outlined bottom-slots v-model="uploadImage" label="Bild auswählen..." counter max-files="1" accept=".jpg, image/*" @update:model-value="handleImg">
@@ -138,6 +150,28 @@
     </q-card>
   </q-dialog>
 
+  <q-dialog v-model="displayDeletePlan">
+    <q-card
+      v-if="appendixLoaded"
+      style="min-width: 50%; max-height: 90vh; padding: 16px; overflow: auto;"
+    >
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div v-for="img in computedAppendix" :key="img">
+          <div style="display: flex; justify-content: space-between;">
+            <h5 style="margin: 0 0 8px 0;">Standort: {{ img.place ? img.place : "Keine Angabe" }}</h5>
+            <q-btn label="Löschen" style="max-height: 30px; background-color: rgba(242, 80, 80, 0.65); margin-bottom: 12px;" @click="deletePlan(img)"></q-btn>
+          </div>
+          <img
+            :src="img.image"
+            alt="Appendix image"
+            style="object-fit: contain; max-width: 100%; max-height: 600px;"
+          />
+        </div>
+
+        <h3 v-if="computedAppendix.length < 1">Keine Einträge gefunden</h3>
+      </div>
+    </q-card>
+  </q-dialog>
 
   </q-layout>
 </template>
@@ -167,7 +201,8 @@ export default defineComponent({
       seatId: "",
       place: "",
       street: "",
-      meetingRoom: false
+      meetingRoom: false,
+      seats: null
     })
     const columns = [
       {
@@ -191,11 +226,15 @@ export default defineComponent({
     const uploadImageFailed = ref(false);
     const appendixButtonSuccess = ref(false);
     const appendixLoaded = ref(false);
+    const placeforImage = ref("")
+    const computedAppendix = ref(null)
 
 
     onMounted(async() => {
       versionOrButton(router.currentRoute.value.fullPath)
       grantAccessToAllUser()
+      loadImages()
+      appendixLoaded.value = true
       await loadAllUserData()
     })
 
@@ -239,6 +278,7 @@ export default defineComponent({
           place: "",
           street: "",
           meetingRoom: false,
+          seats: null
         }
         $q.notify({
             message: "Erfolgreich erstellt.",
@@ -316,9 +356,10 @@ export default defineComponent({
     async function addNewAppendix() {
       appendixButtonSuccess.value = true;
       // console.log(showImageTest.value.split(",")[1])
-      if (await api.post('/api/appendix', {image: showImageTest.value.split(",")[1]})) {
+      if (await api.post('/api/appendix', {image: showImageTest.value.split(",")[1], place: placeforImage.value})) {
           console.log(showImageTest.value.split(",")[1])
           openUpload.value = false;
+          placeforImage.value = ""
           showImageTest.value = null;
           uploadImage.value = null;
           appendixButtonSuccess.value = false;
@@ -327,6 +368,7 @@ export default defineComponent({
             type: "positive",
             timeout: 2000
           })
+          loadImages()
           try {
             // failtimeout.close()
           } catch (err) {
@@ -354,8 +396,30 @@ export default defineComponent({
       }, 1000);
 
     }
+    
+    async function loadImages() {
+      computedAppendix.value = await (await api.get("/api/appendix")).data.data
+    }
 
-
+    async function deletePlan(plan){
+      try {
+        await api.delete('/api/appendix?id=' + plan.id)
+        $q.notify({
+          message: "Erfolgreich gelöscht",
+          type: 'positive',
+          timeout: 2000
+        })
+        loadImages()
+      } catch(err) {
+        console.log(err)
+        $q.notify({
+          message: "Fehler beim löschen",
+          type: 'negative',
+          timeout: 2000
+        })
+      }
+      displayDeletePlan.value = false
+    }
 
     return {
       title,
@@ -374,6 +438,9 @@ export default defineComponent({
       uploadImageFailed,
       appendixButtonSuccess,
       appendixLoaded,
+      placeforImage,
+      displayDeletePlan,
+      computedAppendix,
       showDeletePlan,
       logout,
       showUserDialog,
@@ -381,6 +448,7 @@ export default defineComponent({
       createTable,
       blockUnblockUser,
       handleImg,
+      deletePlan,
       addNewAppendix,
     }
 
@@ -398,5 +466,4 @@ export default defineComponent({
   height: 50px;
   border-radius: 20px;
 }
-
 </style>

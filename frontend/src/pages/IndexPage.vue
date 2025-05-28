@@ -20,7 +20,7 @@
           Raumübersicht
         </p>
         <div style="width: 100%; display: flex; justify-content: right; padding-right: 20px;">
-          <q-btn label="Belegungsplan anzeigen" style="background-color: #17354f;color: white; border-radius: 16px;" @click="showImage()"></q-btn>
+          <q-btn label="Belegungsplan anzeigen" style="background-color: #17354f;color: white; border-radius: 16px; margin-bottom: 8px;" @click="showImage()"></q-btn>
         </div>
       </div>
 
@@ -46,7 +46,7 @@
                     <div class="text-h6">{{ data.seatId }}</div>
                     <div class="text-subtitle2">{{ data.place }}</div>
                     <div class="text-caption">
-                      {{ data.meetingRoom ? 'Meetinraum' : 'Einzelplatz' }}
+                      {{ data.meetingRoom ? 'MR: ' + data.seats + ' Plätze' : 'Einzelplatz' }}
                     </div>
                     <div class="text-caption">
                       {{ isTableFree(data.id) ? 'Frei' : 'Besetzt' }}
@@ -121,7 +121,7 @@
           </div>
         </div>
 
-        <div class="q-pa-md">
+        <div class="q-pa-md" v-if="!isSmallScreen">
           <div class="q-gutter-sm row">
             <q-select label="Andere Optionen" no-caps style="min-width: 160px; max-width: 160px;"
               :options="otherTimeOptions" v-model="selectedTime"></q-select>
@@ -224,24 +224,27 @@
   <q-dialog v-model="windowDisplayPlan">
     <q-card
       v-if="appendixLoaded"
-      style="min-width: 50%; max-height: 90vh; padding: 16px; overflow: auto;"
+      style="min-width: 50%; max-height: 90vh; padding: 16px; overflow: auto; display: flex; justify-content: center;"
     >
       <div style="display: flex; flex-direction: column; gap: 16px;">
-        <img
-          v-for="img in computedAppendix"
-          :key="img"
-          :src="img.image"
-          alt="Appendix image"
-          style="object-fit: contain; max-width: 100%; max-height: 600px;"
-        />
+        <div v-for="img in computedAppendix" :key="img">
+          <h5 style="margin-bottom: 8px;">Standort: {{ img.place ? img.place : "Keine Angabe" }}</h5>
+          <img
+            :src="img.image"
+            alt="Appendix image"
+            style="object-fit: contain; max-width: 100%; max-height: 600px;"
+          />
+        </div>
+
         <h3 v-if="computedAppendix.length < 1">Keine Einträge gefunden</h3>
       </div>
     </q-card>
   </q-dialog>
+
 </template>
 
 <script>
-import { defineComponent, ref, onMounted, watchEffect, watch } from 'vue';
+import { defineComponent, ref, onMounted, watchEffect, watch, computed } from 'vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 
@@ -282,6 +285,7 @@ export default defineComponent({
     const tempBookingForDeletion = ref(null)
     const computedAppendix = ref(null)
     const appendixLoaded = ref(false)
+    const isSmallScreen = computed(() => $q.screen.width < 820)
 
     onMounted(async () => {
       try {
@@ -579,7 +583,7 @@ export default defineComponent({
 
     async function loadImages() {
       computedAppendix.value = await (await api.get("/api/appendix")).data.data
-      console.log(computedAppendix.value)
+      // console.log(computedAppendix.value)
     }
 
     return {
@@ -598,6 +602,7 @@ export default defineComponent({
       windowDisplayPlan,
       appendixLoaded,
       computedAppendix,
+      isSmallScreen,
       showImage,
       confirmDeletion,
       openDialog,

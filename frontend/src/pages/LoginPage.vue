@@ -28,7 +28,7 @@
             <hr class="solid">
 
             <div class="content-rows">
-                <q-btn label="Passwort vergessen" no-caps
+                <q-btn label="Passwort vergessen" no-caps @click="windowResetPsw = true"
                     style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;" />
                 <q-btn label="Account erstellen" no-caps @click="displayCreateAccount()"
                     style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;" />
@@ -93,6 +93,65 @@
             </q-card-actions>
         </q-card>
     </q-dialog>
+
+
+    <q-dialog v-model="windowResetPsw">
+        <q-card style="width: 400px; height: fit-content;">
+
+            <q-card-section style="display: flex; justify-content: center;">
+                <h5 style="margin: 0;">Hier können Sie ihr Passwort ändern:</h5>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*E-Mail" dense v-model="dataResetPassword.email" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Altes Passwort" dense v-model="dataResetPassword.oldPsw" autofocus @keyup.enter="prompt = false" :type="dataResetPassword.displayOldPsw ? 'text' : 'password'">
+                    <template v-slot:append>
+                        <q-icon
+                        :name="dataResetPassword.displayOldPsw ? 'visibility' : 'visibility_off'"
+                        class="cursor-pointer"
+                        @click="dataResetPassword.displayOldPsw = !dataResetPassword.displayOldPsw"
+                        />
+                    </template>
+                </q-input>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Neues Passwort" dense v-model="dataResetPassword.newPsw" autofocus @keyup.enter="prompt = false" :type="dataResetPassword.displayNewPsw ? 'text' : 'password'">
+                    <template v-slot:append>
+                        <q-icon
+                        :name="dataResetPassword.displayNewPsw ? 'visibility' : 'visibility_off'"
+                        class="cursor-pointer"
+                        @click="dataResetPassword.displayNewPsw = !dataResetPassword.displayNewPsw"
+                        />
+                    </template>
+                </q-input>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="*Passwort bestätigen" dense v-model="dataResetPassword.submitNewPsw" autofocus @keyup.enter="prompt = false" :type="dataResetPassword.displaySubmitNewPsw ? 'text' : 'password'"><template v-slot:append>
+                        <q-icon
+                        :name="dataResetPassword.displaySubmitNewPsw ? 'visibility' : 'visibility_off'"
+                        class="cursor-pointer"
+                        @click="dataResetPassword.displaySubmitNewPsw = !dataResetPassword.displaySubmitNewPsw"
+                        />
+                    </template>
+                </q-input>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none" v-if="dataResetPassword.newPsw !== dataResetPassword.submitNewPsw">
+                <a style="color: red;">Passwort muss bestätigt werden.</a>
+            </q-card-section>
+
+            <q-card-actions align="right" class="text-primary">
+                <q-btn flat label="Abbrechen" v-close-popup />
+                <q-btn flat label="Account erstellen" v-close-popup :disabled="dataResetPassword.newPsw !== dataResetPassword.submitNewPsw || dataResetPassword.newPsw == ''" />
+            </q-card-actions>
+        </q-card>
+    </q-dialog>
+
 </template>
 
 
@@ -120,9 +179,18 @@ export default defineComponent({
         const passwordSub = ref("")
         const windowCreateAccount = ref(false)
         const showPassword = ref(false)
-
         const $q = useQuasar()
         const router = useRouter()
+        const windowResetPsw = ref(false)
+        const dataResetPassword = ref({
+            email: "",      
+            oldPsw: "",
+            newPsw: "",
+            submitNewPsw: "",
+            displayOldPsw: false,
+            displayNewPsw: false,
+            displaySubmitNewPsw: false,
+        })
 
 
         async function Login() {
@@ -224,8 +292,10 @@ export default defineComponent({
             dataLogin,
             dataCreateAccount,
             windowCreateAccount,
+            windowResetPsw,
             passwordSub,
             showPassword,
+            dataResetPassword,
             Login,
             displayCreateAccount,
             createAccount
@@ -237,7 +307,6 @@ export default defineComponent({
 
 <style scoped>
 .content {
-    min-width: 500px;
     max-width: 500px;
     min-height: max-content;
     display: flex;
@@ -253,11 +322,11 @@ export default defineComponent({
     display: flex;
     justify-content: left;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
 }
 
 .input {
-    min-width: 480px;
+    min-width: 100px;
     border-radius: 12px;
 }
 

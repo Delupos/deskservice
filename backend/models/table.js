@@ -27,6 +27,11 @@ const table = db.define('table',
             type: sequelize.BOOLEAN,
             allowNull: false,
             defaultValue: false,
+        },
+        seats: {
+            type: sequelize.INTEGER,
+            allowNull: true,
+            defaultValue: null,
         }
     }, 
     { tableName: 'table'}

@@ -7,6 +7,7 @@ const table = require('../../models/table');
  * @param {req.body.seatId} seatId Id to identify seat
  * @param {req.body.place} place place 
  * @param {req.body.street} street optional
+ * @param {req.body.seats} seats optional
  * @return {json} success/ error
  */
 router.post('/', async(req, res) => {
@@ -15,7 +16,8 @@ router.post('/', async(req, res) => {
         const temp = {
             seatId: req.body.seatId,
             place: req.body.place,
-            meetingRoom: req.body.meetingRoom
+            meetingRoom: req.body.meetingRoom,
+            seats: req.body.seats
         }
 
         if(!req.body.place) {
