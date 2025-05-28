@@ -23,6 +23,18 @@
               </q-item-section>
             </q-item>
 
+            <q-item v-if="accessToAllUser" :clickable="accessToAllUser" v-close-popup @click="openUpload = true" id="itemToAllUser">
+              <q-item-section>
+                <q-item-label>Belegungsplan hochladen</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item v-if="accessToAllUser" :clickable="accessToAllUser" v-close-popup @click="showDeletePlan()" id="itemToAllUser">
+              <q-item-section>
+                <q-item-label>Belegungsplan löschen</q-item-label>
+              </q-item-section>
+            </q-item>
+
             <q-item clickable v-close-popup @click="logout()">
               <q-item-section>
                 <q-item-label>Logout</q-item-label>
@@ -83,6 +95,50 @@
     </q-card>
   </q-dialog>
 
+  <q-dialog v-model="openUpload" backdrop-filter="blur(10px)">
+    <q-card class="flex-col">
+      <q-bar>
+        Anhang hochladen
+        <q-space/>
+        <q-btn flat dense icon="close" @click="openUpload = false" />
+      </q-bar>
+
+      <q-card-section>
+        <q-file outlined bottom-slots v-model="uploadImage" label="Bild auswählen..." counter max-files="1" accept=".jpg, image/*" @update:model-value="handleImg">
+          <template v-slot:before>
+            <q-icon name="attachment" />
+          </template>
+
+          <template v-slot:append>
+            <q-icon v-if="uploadImage !== null" name="close" @click.stop.prevent="() => {uploadImage = null; showImageTest = null}" class="cursor-pointer" />
+          </template>
+
+          <template v-slot:hint>
+            Eine Bilddatei
+          </template>
+        </q-file>
+      </q-card-section>
+
+      <q-separator style=""/>
+
+      <q-card-section style="position: relative; min-height: 120px; display: flex; align-items: center; flex-direction: column;">
+        <div class="img-preview">
+          <img v-if="showImageTest" width="100%" :src="showImageTest" alt="">
+          <p v-else>Vorschau für den neuen Anhang</p>
+          <q-btn rounded :loading="appendixButtonSuccess" icon="add" :disabled="uploadImage === null" :class="{'bg-primary': uploadImage !== null}" @click="addNewAppendix">
+            Hochladen
+            <template v-slot:loading>
+              <q-spinner v-if="!uploadImageFailed"/>
+              <q-icon v-else name="close" />
+            </template>
+          </q-btn>
+        </div>
+
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
+
   </q-layout>
 </template>
 
@@ -105,6 +161,8 @@ export default defineComponent({
     const accessToAllUser = ref(false)
     const displayAllUser = ref(false)
     const displayCreateTable = ref(false)
+    const displayCreatePlan = ref(false)
+    const displayDeletePlan = ref(false)
     const createNewTable = ref({
       seatId: "",
       place: "",
@@ -127,6 +185,13 @@ export default defineComponent({
       { name: 'actions', label: 'Blockieren/ Freigeben', field: 'actions', align: 'right' }
     ]
     const userData = ref([])
+    const openUpload = ref(false)
+    const uploadImage = ref(null);
+    const showImageTest = ref(null);
+    const uploadImageFailed = ref(false);
+    const appendixButtonSuccess = ref(false);
+    const appendixLoaded = ref(false);
+
 
     onMounted(async() => {
       versionOrButton(router.currentRoute.value.fullPath)
@@ -160,6 +225,10 @@ export default defineComponent({
 
     async function showTableDialog() {
       displayCreateTable.value = true
+    }
+
+    async function showDeletePlan() {
+      displayDeletePlan.value = true
     }
 
     async function createTable() {
@@ -225,21 +294,94 @@ export default defineComponent({
       router.push('../login')
     }
 
+    async function handleImg(fileData) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const byteArray = new Uint8Array(reader.result);
+        let img = arrayData(byteArray);
+        showImageTest.value = "data:image/png;base64," + img;
+        // console.log(showImageTest.value)
+      }
+      reader.readAsArrayBuffer(fileData);
+    }
+
+    function arrayData(arr) {
+      let chars = "";
+      for (const byte of arr) {
+        chars+=String.fromCharCode(byte);
+      }
+      return btoa(chars); // base64 String
+    }
+
+    async function addNewAppendix() {
+      appendixButtonSuccess.value = true;
+      // console.log(showImageTest.value.split(",")[1])
+      if (await api.post('/api/appendix', {image: showImageTest.value.split(",")[1]})) {
+          console.log(showImageTest.value.split(",")[1])
+          openUpload.value = false;
+          showImageTest.value = null;
+          uploadImage.value = null;
+          appendixButtonSuccess.value = false;
+          $q.notify({
+            message: "Bild wurde erfolgreich hochgeladen.",
+            type: "positive",
+            timeout: 2000
+          })
+          try {
+            // failtimeout.close()
+          } catch (err) {
+            console.log(err)
+          }
+          return;
+      } else {
+        uploadImageFailed.value = true;
+        try {
+          // failtimeout.close()
+        } catch (err) {console.log(err)}
+      }
+
+      $q.notify({
+        message: "Fehler beim hochladen des Anhangs.",
+        type: "negative",
+        timeout: 2000
+      })
+      setTimeout(() => {
+        openUpload.value = false;
+        showImageTest.value = null;
+        uploadImage.value = null;
+        appendixButtonSuccess.value = false;
+        uploadImageFailed.value = false;
+      }, 1000);
+
+    }
+
+
+
     return {
       title,
       version,
       verOrBtn,
       accessToAllUser,
       displayAllUser,
+      displayCreatePlan,
       columns,
       userData,
       displayCreateTable,
       createNewTable,
+      openUpload,
+      uploadImage,
+      showImageTest,
+      uploadImageFailed,
+      appendixButtonSuccess,
+      appendixLoaded,
+      showDeletePlan,
       logout,
       showUserDialog,
       showTableDialog,
       createTable,
       blockUnblockUser,
+      handleImg,
+      addNewAppendix,
     }
 
   }
@@ -247,5 +389,14 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.create {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  margin-left: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 20px;
+}
 
 </style>

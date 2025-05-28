@@ -19,6 +19,9 @@
           <br>
           Raumübersicht
         </p>
+        <div style="width: 100%; display: flex; justify-content: right; padding-right: 20px;">
+          <q-btn label="Belegungsplan anzeigen" style="background-color: #17354f;color: white; border-radius: 16px;" @click="showImage()"></q-btn>
+        </div>
       </div>
 
       <div class="deskview">
@@ -217,6 +220,24 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <q-dialog v-model="windowDisplayPlan">
+    <q-card
+      v-if="appendixLoaded"
+      style="min-width: 50%; max-height: 90vh; padding: 16px; overflow: auto;"
+    >
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <img
+          v-for="img in computedAppendix"
+          :key="img"
+          :src="img.image"
+          alt="Appendix image"
+          style="object-fit: contain; max-width: 100%; max-height: 600px;"
+        />
+        <h3 v-if="computedAppendix.length < 1">Keine Einträge gefunden</h3>
+      </div>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
@@ -257,7 +278,10 @@ export default defineComponent({
     const isLoading = ref(true)
     const grantAllowanceToLoad = ref(false)
     const windowDeleteBooking = ref(false)
+    const windowDisplayPlan = ref(false)
     const tempBookingForDeletion = ref(null)
+    const computedAppendix = ref(null)
+    const appendixLoaded = ref(false)
 
     onMounted(async () => {
       try {
@@ -279,6 +303,8 @@ export default defineComponent({
       const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) + "+02"
 
       await enrichWithAvailability(startTime1, endTime1)
+      loadImages()
+      appendixLoaded.value = true
 
       await new Promise(resolve => setTimeout(resolve, 300));
       isLoading.value = false
@@ -547,6 +573,15 @@ export default defineComponent({
       tempBookingForDeletion.value = booking
     }
 
+    function showImage(){
+      windowDisplayPlan.value = true
+    }
+
+    async function loadImages() {
+      computedAppendix.value = await (await api.get("/api/appendix")).data.data
+      console.log(computedAppendix.value)
+    }
+
     return {
       name,
       otherTimeOptions,
@@ -560,6 +595,10 @@ export default defineComponent({
       windowData,
       isLoading,
       windowDeleteBooking,
+      windowDisplayPlan,
+      appendixLoaded,
+      computedAppendix,
+      showImage,
       confirmDeletion,
       openDialog,
       bookTable,
@@ -567,6 +606,7 @@ export default defineComponent({
       deleteBooking,
       isTableFree,
       handleSeatClick,
+      loadImages,
       thumbStyle: {
         right: '4px',
         borderRadius: '5px',
@@ -866,4 +906,21 @@ export default defineComponent({
     left: 100%;
   }
 }
+
+.appendix-button {
+  padding: 0;
+  background-color: white;
+  position: relative;
+  span {
+    width: 100%!important;
+    height: 100%!important;
+    position: relative;
+  }
+  img {
+    width: inherit;
+    height: inherit;
+    object-fit: contain;
+  }
+}
+
 </style>

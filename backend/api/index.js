@@ -17,6 +17,8 @@ const routeGetSpecificBooking = require('../api/bookings/getSpecificBookings')
 const routeCheckForFreeTable = require('../api/bookings/checkForFreeTable')
 const routeDeleteBooking = require('../api/bookings/deleteBooking')
 
+const routeAppendix = require('../api/images/appendix')
+
 // Middleware
 const middleware = require('../api/middleware/verifyToken')
 
@@ -35,5 +37,7 @@ router.use('/getAllBookings', middleware, routeGetAllBookings)
 router.use('/getSpecificBookings', middleware, routeGetSpecificBooking)
 router.use('/checkForFreeTable', middleware, routeCheckForFreeTable)
 router.use('/deleteBooking', middleware, routeDeleteBooking)
+
+router.use('/appendix', routeAppendix)
 
 module.exports = router
