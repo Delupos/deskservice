@@ -2,7 +2,7 @@
   <q-page class="content">
 
     <div class="calender">
-      <img src="/logo1.jpeg" style="width: 260px; margin-top: 100px; margin-bottom: 40px;">
+      <img src="/logo2.jpeg" style="width: 260px; margin-top: 100px; margin-bottom: 40px;">
       <div class="q-pa-md">
         <div class="q-gutter-md row items-start">
           <q-date v-model="attributesToBookTable.date" minimal style="background-color: #17354f; color: white;" />
@@ -203,7 +203,7 @@
 
 
         <div v-else>
-          <h4>Keine Buchungen</h4>
+          <h4 style="color: white;">Keine Buchungen</h4>
         </div>
       </div>
     </div>
@@ -313,6 +313,7 @@ export default defineComponent({
       await new Promise(resolve => setTimeout(resolve, 300));
       isLoading.value = false
       grantAllowanceToLoad.value = true
+      // console.log(todaysBooking)
     })
 
     watch(() => attributesToBookTable.value.date, async () => {

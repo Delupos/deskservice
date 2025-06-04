@@ -6,15 +6,8 @@ const bcrypt  = require('bcrypt')
 router.put('/', async(req, res) => {
     try {
         const email = req.body.email
-        const oldPsw = req.body.oldPsw
         const newPsw = req.body.newPsw
-
-        if(req.body.oldPsw === req.body.newPsw) {
-            return res.status(400).json({
-                success: false,
-                error: 'Das neue Passwort darf nicht dem alten entsprechen'
-            }) 
-        }
+        const secQuest = req.body.secQuest
 
         const userProfil = await user.findOne({
             where : {
@@ -34,28 +27,27 @@ router.put('/', async(req, res) => {
             })  
         } else {
 
-            const check = await bcrypt.compare(oldPsw, userProfil.dataValues.hashPsw)
-
-            if(check) {
-                await user.update(
-                    { 
-                        'hashPsw': await bcrypt.hash(newPsw, 10)
-                    },
-                    {
-                        where: {
-                            email: email
-                        }
-                    }
-                )
-                res.status(200).json({
-                    success: true
-                })
-            } else {
-                res.status(403).json({
+            if(userProfil.dataValues.secQuest != secQuest) {
+                return res.status(401).json({
                     success: false,
-                    error: "Wrong Password"
+                    error: 'Wrong Secret Question'
                 })
             }
+
+            await user.update(
+                { 
+                    'hashPsw': await bcrypt.hash(newPsw, 10)
+                },
+                {
+                    where: {
+                        email: email
+                    }
+                }
+            )
+            res.status(200).json({
+                success: true
+            })
+            
         }
 
     } catch(err) {

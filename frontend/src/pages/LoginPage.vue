@@ -87,6 +87,14 @@
                 <q-input label="*Masterkey" dense v-model="dataCreateAccount.masterkey" autofocus @keyup.enter="prompt = false" />
             </q-card-section>
 
+            <q-card-section class="q-pt-none">
+                <q-input label="*Geben Sie als Sicherheitsfrage Ihr Lieblingsreiseziel an:" dense v-model="dataCreateAccount.secQuest" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+                <q-input label="Bei Adminrechte bitte das Kennwort angeben:" dense v-model="dataCreateAccount.admin" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
             <q-card-actions align="right" class="text-primary">
                 <q-btn flat label="Abbrechen" v-close-popup />
                 <q-btn flat label="Account erstellen" v-close-popup @click="createAccount()" :disabled="dataCreateAccount.password !== passwordSub || dataCreateAccount.password == ''" />
@@ -104,18 +112,6 @@
 
             <q-card-section class="q-pt-none">
                 <q-input label="*E-Mail" dense v-model="dataResetPassword.email" autofocus @keyup.enter="prompt = false" />
-            </q-card-section>
-
-            <q-card-section class="q-pt-none">
-                <q-input label="*Altes Passwort" dense v-model="dataResetPassword.oldPsw" autofocus @keyup.enter="prompt = false" :type="dataResetPassword.displayOldPsw ? 'text' : 'password'">
-                    <template v-slot:append>
-                        <q-icon
-                        :name="dataResetPassword.displayOldPsw ? 'visibility' : 'visibility_off'"
-                        class="cursor-pointer"
-                        @click="dataResetPassword.displayOldPsw = !dataResetPassword.displayOldPsw"
-                        />
-                    </template>
-                </q-input>
             </q-card-section>
 
             <q-card-section class="q-pt-none">
@@ -145,9 +141,13 @@
                 <a style="color: red;">Passwort muss bestätigt werden.</a>
             </q-card-section>
 
+            <q-card-section class="q-pt-none">
+                <q-input label="*Lieblingsreiseziel als Authentifikation" dense v-model="dataResetPassword.secQuest" autofocus @keyup.enter="prompt = false" />
+            </q-card-section>
+
             <q-card-actions align="right" class="text-primary">
                 <q-btn flat label="Abbrechen" v-close-popup />
-                <q-btn flat label="Account erstellen" v-close-popup :disabled="dataResetPassword.newPsw !== dataResetPassword.submitNewPsw || dataResetPassword.newPsw == ''" />
+                <q-btn flat label="Passwort ändern" v-close-popup :disabled="dataResetPassword.newPsw !== dataResetPassword.submitNewPsw || dataResetPassword.newPsw == ''" @click="resetPassword()"/>
             </q-card-actions>
         </q-card>
     </q-dialog>
@@ -174,7 +174,9 @@ export default defineComponent({
             name: "",
             surname: "",
             password: "",
-            masterkey: ""
+            masterkey: "",
+            secQuest: "",
+            admin: ""
         })
         const passwordSub = ref("")
         const windowCreateAccount = ref(false)
@@ -183,11 +185,10 @@ export default defineComponent({
         const router = useRouter()
         const windowResetPsw = ref(false)
         const dataResetPassword = ref({
-            email: "",      
-            oldPsw: "",
+            email: "",  
             newPsw: "",
             submitNewPsw: "",
-            displayOldPsw: false,
+            secQuest: "",
             displayNewPsw: false,
             displaySubmitNewPsw: false,
         })
@@ -263,7 +264,9 @@ export default defineComponent({
                     name: "",
                     surname: "",
                     password: "",
-                    masterkey: ""
+                    masterkey: "",
+                    secQuest: "",
+                    admin: ""
                 }
                 $q.notify({
                     message: "Ihr Account wurde erfolgreich angelegt.",
@@ -288,6 +291,36 @@ export default defineComponent({
             }
         }
 
+        async function resetPassword(){
+            try {
+
+                await api.put('/api/changePassword', dataResetPassword.value)
+                dataResetPassword.value = {
+                    email: "", 
+                    newPsw: "",
+                    submitNewPsw: "",
+                    secQuest: "",
+                    displayOldPsw: false,
+                    displayNewPsw: false,
+                    displaySubmitNewPsw: false,
+                }
+
+                $q.notify({
+                    message: "Passwort wurde erfolgreich geändert",
+                    type: 'positive',
+                    timeout: 2000
+                })
+
+            } catch(err) {
+                console.log(err)
+                $q.notify({
+                    message: "Fehler beim Passwort zurücksetzen",
+                    type: 'negative',
+                    timeout: 2000
+                })
+            }
+        }
+
         return {
             dataLogin,
             dataCreateAccount,
@@ -298,7 +331,8 @@ export default defineComponent({
             dataResetPassword,
             Login,
             displayCreateAccount,
-            createAccount
+            createAccount,
+            resetPassword
         }
     }
 });
@@ -308,6 +342,7 @@ export default defineComponent({
 <style scoped>
 .content {
     max-width: 500px;
+    min-width: 420px;
     min-height: max-content;
     display: flex;
     flex-direction: column;

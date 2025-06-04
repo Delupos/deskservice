@@ -8,9 +8,11 @@ const routeValidations = require('../api/auth/validations')
 const routeGetAllUser = require('../api/auth/getAllUsers')
 const routeBlockUser = require('../api/auth/blockUser')
 const routeChangePsw = require('../api/auth/changePassword')
+const routeDeleteUser = require('../api/auth/deleteUser')
 
 const routeCreateNewTable = require('../api/table/placeNewTable')
 const routeGetAllTable = require('../api/table/getAllTables')
+const routeDeleteTable = require('../api/table/deleteTable')
 
 const routeCreateBooking = require('../api/bookings/createBooking')
 const routeGetAllBookings = require('../api/bookings/getBookings')
@@ -30,9 +32,11 @@ router.use('/validations', routeValidations)
 router.use('/getAllUser', middleware, routeGetAllUser)
 router.use('/blockUser', routeBlockUser)
 router.use('/changePassword', routeChangePsw)
+router.use('/deleteUser/', middleware, routeDeleteUser)
 
 router.use('/createTable', middleware, routeCreateNewTable)
 router.use('/getAllTables', middleware, routeGetAllTable)
+router.use('/deleteTable/', middleware, routeDeleteTable)
 
 router.use('/createBooking', middleware, routeCreateBooking)
 router.use('/getAllBookings', middleware, routeGetAllBookings)

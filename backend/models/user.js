@@ -55,6 +55,10 @@ const user = db.define('user',
             type: sequelize.DATE,
             allowNull: false
         },
+        secQuest: {
+            type: sequelize.STRING,
+            allowNull: false
+        },    
     },
     { tableName: 'user'}
 )

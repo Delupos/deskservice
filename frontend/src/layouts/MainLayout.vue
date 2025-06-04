@@ -19,7 +19,13 @@
 
             <q-item v-if="accessToAllUser" :clickable="accessToAllUser" v-close-popup @click="showTableDialog()" id="itemToAllUser">
               <q-item-section>
-                <q-item-label>Neuen Tisch anlegen</q-item-label>
+                <q-item-label>Tisch anlegen</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item v-if="accessToAllUser" :clickable="accessToAllUser" v-close-popup @click="displayDeleteTable = true" id="itemToAllUser">
+              <q-item-section>
+                <q-item-label>Tisch löschen</q-item-label>
               </q-item-section>
             </q-item>
 
@@ -41,6 +47,12 @@
               </q-item-section>
             </q-item>
 
+            <q-item clickable v-close-popup @click="showImpressum = true">
+              <q-item-section>
+                <q-item-label>Impressum</q-item-label>
+              </q-item-section>
+            </q-item>
+
           </q-list>
         
         </q-btn-dropdown>
@@ -54,22 +66,44 @@
     </q-page-container>
 
 
-  <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
-      <q-card style="min-width: 800px; min-height: fit-content; max-height: 600px ; padding: 16px;">
-        <q-table
-          title="Alle Nutzer:"
-          :rows="userData"
-          :columns="columns"
-          row-key="email"
-        >
-          <template v-slot:body-cell-actions="props">
-            <q-td :props="props">
-              <q-btn style="background-color: #D9DBF1;" label="Ändern" @click="blockUnblockUser(props.row)" size="sm" />
-            </q-td>
-          </template>
-        </q-table>
+    <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
+      <q-card style="width: 100vw; max-width: 800px; max-height: 90vh; padding: 16px;">
+        <div style="overflow-x: auto;">
+          <q-table
+            dense
+            flat
+            bordered
+            title="Alle Nutzer:"
+            :rows="userData"
+            :columns="columns"
+            row-key="email"
+          >
+            <template v-slot:body-cell-actions="props">
+              <q-td :props="props">
+                <q-btn
+                  style="background-color: #D9DBF1;"
+                  label="Ändern"
+                  @click="blockUnblockUser(props.row)"
+                  size="sm"
+                />
+              </q-td>
+            </template>
+
+            <template v-slot:body-cell-delete="props">
+              <q-td :props="props">
+                <q-btn
+                  color="negative"
+                  label="Löschen"
+                  @click="deleteUser(props.row)"
+                  size="sm"
+                  outline
+                />
+              </q-td>
+            </template>
+          </q-table>
+        </div>
       </q-card>
-  </q-dialog>
+    </q-dialog>
 
   <q-dialog v-model="displayCreateTable" transition-show="scale" transition-hide="scale">
     <q-card style="min-width: 500px; min-height: fit-content; max-height: 600px ; padding: 16px;">
@@ -77,10 +111,10 @@
         <h6>Lege einen neuen Tisch an:</h6>  
       </q-card-section>
       <q-card-section class="q-pt-none">
-        <q-input filled dense v-model="createNewTable.seatId" autofocus label='Tischnummer:'></q-input>
+        <q-input filled dense v-model="createNewTable.seatId" autofocus label='*Tischnummer:'></q-input>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        <q-input filled dense v-model="createNewTable.place" autofocus label='Stadt von Standort:'></q-input>
+        <q-input filled dense v-model="createNewTable.place" autofocus label='*Stadt von Standort:'></q-input>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-input filled dense v-model="createNewTable.street" autofocus label='Straße (Optional):'></q-input>
@@ -100,6 +134,32 @@
           <q-btn flat label='Schließen' v-close-popup no-caps></q-btn>
           <q-btn flat label='Erstellen' v-close-popup no-caps @click="createTable()"></q-btn>
       </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="displayDeleteTable" transition-show="scale" transition-hide="scale">
+    <q-card style="width: 100vw; max-width: 800px; max-height: 90vh; padding: 16px;">
+      <q-table
+            dense
+            flat
+            bordered
+            title="Alle Tische:"
+            :rows="tableData"
+            :columns="columns_tables"
+            row-key="email"
+          >
+          <template v-slot:body-cell-delete="props">
+              <q-td :props="props">
+                <q-btn
+                  color="negative"
+                  label="Löschen"
+                  @click="deleteTable(props.row)"
+                  size="sm"
+                  outline
+                />
+              </q-td>
+            </template>
+        </q-table>
     </q-card>
   </q-dialog>
 
@@ -158,7 +218,7 @@
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div v-for="img in computedAppendix" :key="img">
           <div style="display: flex; justify-content: space-between;">
-            <h5 style="margin: 0 0 8px 0;">Standort: {{ img.place ? img.place : "Keine Angabe" }}</h5>
+            <h5 style="margin: 0px 0 8px 0;">Standort: {{ img.place ? img.place : "Keine Angabe" }}</h5>
             <q-btn label="Löschen" style="max-height: 30px; background-color: rgba(242, 80, 80, 0.65); margin-bottom: 12px;" @click="deletePlan(img)"></q-btn>
           </div>
           <img
@@ -172,6 +232,28 @@
       </div>
     </q-card>
   </q-dialog>
+
+  <q-dialog v-model="showImpressum" transition-show="scale" transition-hide="scale">
+    <q-card style="min-width: 400px; max-height: 1000px;">
+      <q-card-section style="min-height: 100px; max-height: 100px; margin-top: -30px; margin-bottom: 20px;">
+        <h4 style="font-weight: bold;">Impressum:</h4>
+      </q-card-section>
+
+      <q-card-section>
+        <p>Timm Kalesse</p>
+        <p>Muster Straße</p>
+        <p>12345 Musterhausen</p>
+        <h6 style="margin-top: 25px; margin-bottom: 20px;">Kontakt:</h6>
+        <p>Telefon: 0123 12345678</p>
+        <p>E-Mail: timm-kalesse@mustermail.de</p>
+      </q-card-section>
+
+      <q-card-actions style="display: flex; justify-content: right;">
+        <q-btn flat label='Schließen' v-close-popup></q-btn>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
 
   </q-layout>
 </template>
@@ -197,6 +279,7 @@ export default defineComponent({
     const displayCreateTable = ref(false)
     const displayCreatePlan = ref(false)
     const displayDeletePlan = ref(false)
+    const displayDeleteTable = ref(false)
     const createNewTable = ref({
       seatId: "",
       place: "",
@@ -216,10 +299,21 @@ export default defineComponent({
       },
       { name: 'vorname', align: 'center', label:'Vorname', field: 'vorname',  sortable: true },
       { name: 'nachname', label: 'Nachname', field: 'nachname',  sortable: true },
-      { name: 'blocked', label: 'Blockiert', field: 'blocked', sortable: true},
-      { name: 'actions', label: 'Blockieren/ Freigeben', field: 'actions', align: 'right' }
+      { name: 'blocked', label: 'Blockiert', field: 'blocked', sortable: true, format: val => val ? 'Ja' : 'Nein'},
+      { name: 'actions', label: 'Blockieren/ Freigeben', field: 'actions', align: 'right' },
+      { name: 'delete', label: 'Löschen', field: 'delete', align: 'right'}
+    ]
+    const columns_tables = [
+      { name: 'id', align: 'left', required: true, label: 'Id', field: 'id', sortable: true },
+      { name: 'seatId', align: 'center', label:'Seat Id', field: 'seatId',  sortable: true },
+      { name: 'place', align: 'center', label:'Ort', field: 'place',  sortable: true },
+      { name: 'street', align: 'center', label:'Straße', field: 'street',  sortable: true, format: val => val ? val : 'Keine Angabe' },
+      { name: 'meetingRoom', label: 'Meeting Raum', field: 'meetingRoom', sortable: true, format: val => val ? 'Ja' : 'Nein'},
+      { name: 'seats', label: 'Plätze', field: 'seats', sortable: true, format: val => val ? val : '1'},
+      { name: 'delete', label: 'Löschen', field: 'delete', align: 'right'}
     ]
     const userData = ref([])
+    const tableData = ref([])
     const openUpload = ref(false)
     const uploadImage = ref(null);
     const showImageTest = ref(null);
@@ -228,6 +322,7 @@ export default defineComponent({
     const appendixLoaded = ref(false);
     const placeforImage = ref("")
     const computedAppendix = ref(null)
+    const showImpressum = ref(false)
 
 
     onMounted(async() => {
@@ -236,6 +331,7 @@ export default defineComponent({
       loadImages()
       appendixLoaded.value = true
       await loadAllUserData()
+      await openDeleteTableWindow()
     })
 
     watch(() => router.currentRoute.value.fullPath, (newPath) => {  
@@ -259,6 +355,7 @@ export default defineComponent({
     }
 
     async function showUserDialog() {
+      // await loadAllUserData()
       displayAllUser.value = true
     }
 
@@ -272,6 +369,22 @@ export default defineComponent({
 
     async function createTable() {
       try {
+
+        if(createNewTable.value.place == "" || createNewTable.value.seatId == "") {
+          return $q.notify({
+            message: "Bitte die notwendigen Daten angeben.",
+            type: "negative",
+            timeout:2000
+          })
+        }
+
+        if(createNewTable.value.seats == null && createNewTable.value.meetingRoom == true) {
+          return $q.notify({
+            message: "Bitte die Anzahl der Sitze angeben.",
+            type: "negative",
+            timeout:2000
+          })
+        }
         api.post('/api/createTable', createNewTable.value, {headers: {"authorization": localStorage.getItem('accesstoken')}})
         createNewTable.value = {
           seatId: "",
@@ -303,7 +416,8 @@ export default defineComponent({
               name: result[i].email,
               vorname: result[i].name,
               nachname: result[i].surname,
-              blocked: result[i].blocked
+              blocked: result[i].blocked,
+              id: result[i].id
             }
           )
         }
@@ -357,7 +471,6 @@ export default defineComponent({
       appendixButtonSuccess.value = true;
       // console.log(showImageTest.value.split(",")[1])
       if (await api.post('/api/appendix', {image: showImageTest.value.split(",")[1], place: placeforImage.value})) {
-          console.log(showImageTest.value.split(",")[1])
           openUpload.value = false;
           placeforImage.value = ""
           showImageTest.value = null;
@@ -401,7 +514,7 @@ export default defineComponent({
       computedAppendix.value = await (await api.get("/api/appendix")).data.data
     }
 
-    async function deletePlan(plan){
+    async function deletePlan(plan) {
       try {
         await api.delete('/api/appendix?id=' + plan.id)
         $q.notify({
@@ -419,6 +532,94 @@ export default defineComponent({
         })
       }
       displayDeletePlan.value = false
+    }
+
+    async function deleteUser(user) {
+      $q.dialog({
+        title: 'Nutzer löschen',
+        message: `Möchtest du den Nutzer mit der E-Mail "${user.name}" wirklich löschen?`,
+        ok: {
+          label: 'Löschen',
+          color: 'negative'
+        },
+        cancel: {
+          label: 'Abbrechen',
+          color: 'primary'
+        },
+        persistent: true
+      }).onOk(async () => {
+        try {
+          await api.delete(`/api/deleteUser/?id=${user.id}`, {headers: {"authorization": localStorage.getItem('accesstoken')}})
+          $q.notify({
+            message: 'Nutzer wurde erfolgreich gelöscht',
+            type: 'positive'
+          })
+
+          userData.value = []
+          await loadAllUserData()
+
+        } catch (err) {
+          console.error(err)
+          $q.notify({
+            message: 'Fehler beim Löschen des Nutzers',
+            type: 'negative'
+          })
+        }
+      })
+    }
+
+    async function openDeleteTableWindow() {
+      try {
+        const result = (await api.get('/api/getAllTables', {headers: {"authorization": localStorage.getItem('accesstoken')}})).data.data
+        for (let i = 0; i<result.length; i+=1){
+          tableData.value.push(
+            {
+              id: result[i].id,
+              seatId: result[i].seatId,
+              place: result[i].place,
+              street: result[i].street,
+              meetinRoom: result[i].meetinRoom,
+              seats: result[i].seats
+            }
+          )
+        }
+      } catch(err) {
+        console.log(err)
+      }
+    }
+
+    async function deleteTable(table) {
+      $q.dialog({
+        title: 'Tisch Löschen',
+        message: `Möchtest du den Tisch mit der Seat Id ${table.seatId} (Id: ${table.id}) wirklich löschen?`,
+        ok: {
+          label: 'Löschen',
+          color: 'negative'
+        },
+        cancel: {
+          label: 'Abbrechen',
+          color: 'primary'
+        },
+        persistent: true
+      }).onOk(async () => {
+        try {
+          await api.delete(`/api/deleteTable/?id=${table.id}`, {headers: {"authorization": localStorage.getItem('accesstoken')}})
+          $q.notify({
+            message: 'Tisch wurde erfolgreich gelöscht',
+            type: 'positive'
+          })
+
+          tableData.value = []
+          await openDeleteTableWindow()
+
+        } catch (err) {
+          console.error(err)
+          $q.notify({
+            message: 'Fehler beim Löschen des Nutzers',
+            type: 'negative'
+          })
+        }
+      })
     }
 
     return {
@@ -441,6 +642,10 @@ export default defineComponent({
       placeforImage,
       displayDeletePlan,
       computedAppendix,
+      showImpressum,
+      displayDeleteTable,
+      columns_tables,
+      tableData,
       showDeletePlan,
       logout,
       showUserDialog,
@@ -450,6 +655,9 @@ export default defineComponent({
       handleImg,
       deletePlan,
       addNewAppendix,
+      deleteUser,
+      openDeleteTableWindow,
+      deleteTable,
     }
 
   }

@@ -13,6 +13,8 @@ const bcrypt = require('bcrypt');
 */
 router.post('/', async(req, res) => {
   try {
+
+    var admin = false
     
     // Muss noch ausgelagert werden
     if (req.body.masterkey != "FOM-2022") {
@@ -23,11 +25,17 @@ router.post('/', async(req, res) => {
       return;     
     }
 
+    if (req.body.admin == "HALLO_WELT!") {
+      admin = true
+    }
+
     const temp = {
         email: req.body.email,
         name: req.body.name,
         surname: req.body.surname,
-        hashPsw: await bcrypt.hash(req.body.password, 10)
+        hashPsw: await bcrypt.hash(req.body.password, 10),
+        secQuest: req.body.secQuest,
+        admin: admin
     }
 
     await user.create(temp)

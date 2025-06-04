@@ -12,9 +12,9 @@ const table = require('../models/table')
 const bookings = require('../models/bookings')
 
 // Relations
-user.hasMany(bookings, { foreignKey: 'userId' });
+user.hasMany(bookings, { foreignKey: 'userId', onDelete: 'CASCADE' });
 bookings.belongsTo(user, { foreignKey: 'userId' });
-table.hasMany(bookings, { foreignKey: 'tableId' });
+table.hasMany(bookings, { foreignKey: 'tableId', onDelete: 'CASCADE' });
 bookings.belongsTo(table, { foreignKey: 'tableId' });
 
 app.listen(port, () => { 
@@ -23,7 +23,7 @@ app.listen(port, () => {
 db.authenticate() 
     .then(() => console.log("database connected")) 
     .catch(err => console.log("Error" + err)) 
-db.sync() 
+db.sync({ alter: true }) 
 app.use(cors()) 
 let corsOptions = { origin: '*', optionSuccessStatus: 200, 
     methods: ['GET', 'PUT', 'POST', 'DELETE']}
