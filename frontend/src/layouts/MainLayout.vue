@@ -66,47 +66,47 @@
     </q-page-container>
 
 
-    <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
-      <q-card style="width: 100vw; max-width: 800px; max-height: 90vh; padding: 16px;">
-        <div style="overflow-x: auto;">
-          <q-table
-            dense
-            flat
-            bordered
-            title="Alle Nutzer:"
-            :rows="userData"
-            :columns="columns"
-            row-key="email"
-          >
-            <template v-slot:body-cell-actions="props">
-              <q-td :props="props">
-                <q-btn
-                  style="background-color: #D9DBF1;"
-                  label="Ändern"
-                  @click="blockUnblockUser(props.row)"
-                  size="sm"
-                />
-              </q-td>
-            </template>
+  <q-dialog v-model="displayAllUser" transition-show="scale" transition-hide="scale">
+    <q-card style="width: 100vw; max-width: 800px; max-height: 90vh; padding: 16px;">
+      <div style="overflow-x: auto;">
+        <q-table
+          dense
+          flat
+          bordered
+          title="Alle Nutzer:"
+          :rows="userData"
+          :columns="columns"
+          row-key="email"
+        >
+          <template v-slot:body-cell-actions="props">
+            <q-td :props="props">
+              <q-btn
+                style="background-color: #D9DBF1;"
+                label="Ändern"
+                @click="blockUnblockUser(props.row)"
+                size="sm"
+              />
+            </q-td>
+          </template>
 
-            <template v-slot:body-cell-delete="props">
-              <q-td :props="props">
-                <q-btn
-                  color="negative"
-                  label="Löschen"
-                  @click="deleteUser(props.row)"
-                  size="sm"
-                  outline
-                />
-              </q-td>
-            </template>
-          </q-table>
-        </div>
-      </q-card>
-    </q-dialog>
+          <template v-slot:body-cell-delete="props">
+            <q-td :props="props">
+              <q-btn
+                color="negative"
+                label="Löschen"
+                @click="deleteUser(props.row)"
+                size="sm"
+                outline
+              />
+            </q-td>
+          </template>
+        </q-table>
+      </div>
+    </q-card>
+  </q-dialog>
 
   <q-dialog v-model="displayCreateTable" transition-show="scale" transition-hide="scale">
-    <q-card style="min-width: 500px; min-height: fit-content; max-height: 600px ; padding: 16px;">
+    <q-card style="min-width: 350px; min-height: fit-content; max-height: 600px ; padding: 16px; max-width: 500px; width: 100%;">
       <q-card-section style="min-height: 100px; max-height: 100px; margin-top: -30px; margin-bottom: 20px;">          
         <h6>Lege einen neuen Tisch an:</h6>  
       </q-card-section>
@@ -234,7 +234,7 @@
   </q-dialog>
 
   <q-dialog v-model="showImpressum" transition-show="scale" transition-hide="scale">
-    <q-card style="min-width: 400px; max-height: 1000px;">
+    <q-card style="min-width: 320px; max-height: 1000px; max-width: 500px; width: 100%;">
       <q-card-section style="min-height: 100px; max-height: 100px; margin-top: -30px; margin-bottom: 20px;">
         <h4 style="font-weight: bold;">Impressum:</h4>
       </q-card-section>

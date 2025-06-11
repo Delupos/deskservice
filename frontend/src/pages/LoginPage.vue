@@ -21,7 +21,7 @@
             </div>
             <div class="content-rows" style="margin-top: 4px;">
                 <q-btn label="Einloggen" no-caps
-                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;"
+                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 48%; font-size: 14px;"
                     @click="Login()" />
             </div>
 
@@ -29,15 +29,15 @@
 
             <div class="content-rows">
                 <q-btn label="Passwort vergessen" no-caps @click="windowResetPsw = true"
-                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;" />
+                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 48%; font-size: 14px;" />
                 <q-btn label="Account erstellen" no-caps @click="displayCreateAccount()"
-                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 50%;" />
+                    style="border-radius: 20px; background-color: #17354f;; color: white; font-size: medium; min-width: 48%; font-size: 14px;" />
             </div>
         </div>
     </q-page>
 
     <q-dialog v-model="windowCreateAccount">
-        <q-card style="min-width: 400px; max-width: 400px;">
+        <q-card style="min-width: 360px; max-width: 400px;">
             <q-card-section>
                 <div class="text-h6">
                     Erstellen Sie ihren Account:
@@ -241,7 +241,11 @@ export default defineComponent({
         }
 
         async function createAccount() {
-            if(Object.values(dataCreateAccount.value).some(value => value === "")){
+
+            const data = { ...dataCreateAccount.value }
+            delete data.admin
+
+            if(Object.values(data).some(value => value === "")){
                 $q.notify({
                     message: "Bitte alle Felder ausfüllen.",
                     type: "negative",
@@ -342,7 +346,7 @@ export default defineComponent({
 <style scoped>
 .content {
     max-width: 500px;
-    min-width: 420px;
+    min-width: 370px;
     min-height: max-content;
     display: flex;
     flex-direction: column;

@@ -19,7 +19,7 @@
           <br>
           Raumübersicht
         </p>
-        <div style="width: 100%; display: flex; justify-content: right; padding-right: 20px;">
+        <div style="width: 100%; display: flex; justify-content: right; padding: 0 20px 0 0;">
           <q-btn label="Belegungsplan anzeigen" style="background-color: #17354f;color: white; border-radius: 16px; margin-bottom: 8px;" @click="showImage()"></q-btn>
         </div>
       </div>
@@ -481,6 +481,7 @@ export default defineComponent({
       const [datePart, timePart] = input.split(' ')
       const [year, month, day] = datePart.split('/').map(s => s.padStart(2, '0'))
       const [hour, minute] = timePart.split(':').map(s => s.padStart(2, '0'))
+      console.log(`${year}-${month}-${day}T${hour}:${minute}:00`)
 
       return `${year}-${month}-${day}T${hour}:${minute}:00`
     }
@@ -660,6 +661,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 260px;
 }
 
 .bookings {
@@ -695,7 +697,7 @@ export default defineComponent({
 
 
 .deskview {
-  margin-top: 20px;
+  margin-top: 40px;
   background-color: white;
   min-height: 55%;
   min-width: 80%;

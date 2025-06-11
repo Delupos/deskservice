@@ -6,7 +6,7 @@ router.get('/', async(req, res) => {
     try {
         const result = await table.findAll({
             order: [
-                ["id", "ASC"]
+                ["seatId", "ASC"]
             ]
         })
 
