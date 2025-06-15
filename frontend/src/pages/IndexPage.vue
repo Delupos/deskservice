@@ -303,8 +303,8 @@ export default defineComponent({
           myBookings.value = null
         }
       }
-      const startTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime) + "+02"
-      const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) + "+02"
+      const startTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime) 
+      const endTime1 = convertDateStringToLocalISO(attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime) 
 
       await enrichWithAvailability(startTime1, endTime1)
       loadImages()
@@ -313,7 +313,7 @@ export default defineComponent({
       await new Promise(resolve => setTimeout(resolve, 300));
       isLoading.value = false
       grantAllowanceToLoad.value = true
-      // console.log(todaysBooking)
+      // console.log(myBookings.value)
     })
 
     watch(() => attributesToBookTable.value.date, async () => {
@@ -363,6 +363,7 @@ export default defineComponent({
           start: attributesToBookTable.value.date + " " + attributesToBookTable.value.startTime,
           end: attributesToBookTable.value.date + " " + attributesToBookTable.value.endTime,
         }
+        console.log(dataForBooking)
         if(isValidTimeRange(dataForBooking.start, dataForBooking.end)) {
           await api.post('/api/createBooking', dataForBooking, {headers: {"authorization": localStorage.getItem('accesstoken')}})
           $q.notify({
@@ -391,8 +392,14 @@ export default defineComponent({
             type: "negative",
             timeout: 2000
           })
+        } else if(err.status == 409) {
+          $q.notify({
+            message: err.response.data.error,
+            type: "negative",
+            timeout: 2000
+          })
         }
-        // console.log(err)
+        console.log(err)
       }
     }
 
@@ -489,6 +496,7 @@ export default defineComponent({
     async function enrichWithAvailability(startTime1, endTime1) {
       currentData.value = []
       for (let i = 0; i < bookingData.value.length; i++) {
+        // console.log(bookingData.value)
         const table = bookingData.value[i]
         const { data } = await api.post('/api/checkForFreeTable', {
           tableId: table.id,
@@ -515,9 +523,9 @@ export default defineComponent({
       for (var entry in currentData.value) {
         if (currentData.value[entry].tableId == data.id) {
           windowData.value.startTime = addHoursToTime(
-            currentData.value[entry].data.data.startTime.slice(11, 16), 2)
+            currentData.value[entry].data.data.startTime.slice(11, 16), 0)
           windowData.value.endTime = addHoursToTime(
-            currentData.value[entry].data.data.endTime.slice(11, 16), 2)
+            currentData.value[entry].data.data.endTime.slice(11, 16), 0)
         }
       }
     }

@@ -3,6 +3,8 @@ const router = express.Router()
 const user = require('../../models/user')
 const table = require('../../models/table')
 const bookings = require('../../models/bookings')
+const { Op } = require('sequelize');
+
 
 /**
  * API-Call to create booking
@@ -23,6 +25,25 @@ router.post('/', async(req, res) => {
             tableId: req.body.tableId,
             startTime: startTime,
             endTime: endTime
+        }
+
+        const conflictingBookings = await bookings.findAll({
+            where: {
+                tableId: req.body.tableId,
+                [Op.and]: [
+                    { startTime: { [Op.lt]: temp.endTime } },
+                    { endTime: { [Op.gt]: temp.startTime } }
+                ]
+            }
+        })
+
+        console.log(conflictingBookings)
+
+        if (conflictingBookings.length > 0) {
+            return res.status(409).json({
+                success: false,
+                error: "Dieser Zeitraum überschneidet sich mit einer bestehenden Buchung."
+            })
         }
 
         await bookings.create(temp)

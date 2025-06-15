@@ -332,6 +332,8 @@ export default defineComponent({
       appendixLoaded.value = true
       await loadAllUserData()
       await openDeleteTableWindow()
+      // console.log("Table Data:")
+      // console.log(tableData.value)
     })
 
     watch(() => router.currentRoute.value.fullPath, (newPath) => {  
@@ -578,7 +580,7 @@ export default defineComponent({
               seatId: result[i].seatId,
               place: result[i].place,
               street: result[i].street,
-              meetinRoom: result[i].meetinRoom,
+              meetingRoom: result[i].meetingRoom,
               seats: result[i].seats
             }
           )

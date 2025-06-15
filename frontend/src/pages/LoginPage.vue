@@ -345,8 +345,9 @@ export default defineComponent({
 
 <style scoped>
 .content {
-    max-width: 500px;
+    max-width: 600px;
     min-width: 370px;
+    width: 100%;
     min-height: max-content;
     display: flex;
     flex-direction: column;
