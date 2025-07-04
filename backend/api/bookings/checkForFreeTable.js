@@ -11,9 +11,11 @@ router.post('/', async (req, res, next) => {
     .fromISO(req.body.startTime, { setZone: true })
     .toJSDate()
   
-  const endTime = DateTime
+    const endTime = DateTime
     .fromISO(req.body.endTime,   { setZone: true })
     .toJSDate()
+
+    console.log(startTime)
 
     console.log(typeof tableId)
     if (typeof tableId !== 'number' || !startTime || !endTime) {
